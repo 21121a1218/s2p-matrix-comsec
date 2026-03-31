@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>S2P — Matrix Comsec</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon"><i class="fa-solid fa-network-wired"></i></div>
+      <div class="logo-text">
+        <span class="logo-main">Matrix S2P</span>
+        <span class="logo-sub">Comsec Pvt. Ltd.</span>
+      </div>
+    </div>
+
+<nav class="sidebar-nav">
+  <a href="index.html"                   class="nav-item active" data-page="dashboard">
+    <i class="fa fa-chart-pie"></i><span>Dashboard</span>
+  </a>
+  <a href="pages/vendors.html"           class="nav-item" data-page="vendors">
+    <i class="fa fa-building"></i><span>Vendors</span>
+  </a>
+  <a href="pages/rfq.html"               class="nav-item" data-page="rfq">
+    <i class="fa fa-file-alt"></i><span>RFQ</span>
+  </a>
+  <a href="pages/quotations.html"        class="nav-item" data-page="quotations">
+    <i class="fa fa-balance-scale"></i><span>Quotations</span>
+  </a>
+  <a href="pages/purchase_orders.html"   class="nav-item" data-page="po">
+    <i class="fa fa-shopping-cart"></i><span>Purchase Orders</span>
+  </a>
+  <a href="pages/invoices.html"          class="nav-item" data-page="invoices">
+    <i class="fa fa-file-invoice"></i><span>Invoices</span>
+  </a>
+  <a href="pages/payments.html"          class="nav-item" data-page="payments">
+    <i class="fa fa-money-bill-wave"></i><span>Payments</span>
+  </a>
+  <a href="pages/performance.html"       class="nav-item" data-page="performance">
+    <i class="fa fa-star"></i><span>Performance</span>
+  </a>
+  <a href="pages/ai_discovery.html"      class="nav-item" data-page="ai_discovery">
+    <i class="fa fa-robot"></i><span>AI Discovery</span>
+  </a>
+  <a href="pages/sap_integration.html"   class="nav-item" data-page="sap_integration">
+    <i class="fa fa-plug"></i><span>SAP Integration</span>
+  </a>
+  <a href="pages/contracts.html"         class="nav-item" data-page="contracts">
+    <i class="fa fa-file-contract"></i><span>Contracts</span>
+  </a>
+  <a href="pages/negotiations.html"      class="nav-item" data-page="negotiations">
+    <i class="fa fa-handshake"></i><span>Negotiations</span>
+  </a>
+  <a href="pages/checklists.html"        class="nav-item" data-page="checklists">
+    <i class="fa fa-tasks"></i><span>Checklists</span>
+  </a>
+  <a href="pages/audit.html"             class="nav-item" data-page="audit">
+    <i class="fa fa-history"></i><span>Audit Trail</span>
+  </a>
+</nav>
+
+    <div class="sidebar-footer">
+      <span><i class="fa fa-circle green-dot"></i> System Online</span>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- TOP NAR -->
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()">
+        <i class="fa fa-bars"></i>
+      </button>
+      <div class="topbar-title">
+        <h1 id="page-title">Dashboard</h1>
+        <span id="page-subtitle">Source-to-Pay Overview</span>
+      </div>
+      <div class="topbar-right">
+        <span class="badge-date" id="today-date"></span>
+        <div class="user-avatar">
+          <i class="fa fa-user-circle"></i>
+        </div>
+      </div>
+    </header>
+
+    <!-- DASHBOARD BODY -->
+    <div class="content-body">
+
+      <!-- KPI CARDS -->
+      <div class="kpi-grid" id="kpi-grid">
+        <div class="kpi-card blue">
+          <div class="kpi-icon"><i class="fa fa-building"></i></div>
+          <div class="kpi-data">
+            <span class="kpi-value" id="kpi-vendors">--</span>
+            <span class="kpi-label">Total Vendors</span>
+          </div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-icon"><i class="fa fa-check-circle"></i></div>
+          <div class="kpi-data">
+            <span class="kpi-value" id="kpi-approved">--</span>
+            <span class="kpi-label">Approved Vendors</span>
+          </div>
+        </div>
+        <div class="kpi-card orange">
+          <div class="kpi-icon"><i class="fa fa-file-alt"></i></div>
+          <div class="kpi-data">
+            <span class="kpi-value" id="kpi-rfq">--</span>
+            <span class="kpi-label">Open RFQs</span>
+          </div>
+        </div>
+        <div class="kpi-card purple">
+          <div class="kpi-icon"><i class="fa fa-shopping-cart"></i></div>
+          <div class="kpi-data">
+            <span class="kpi-value" id="kpi-po">--</span>
+            <span class="kpi-label">Total POs</span>
+          </div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-icon"><i class="fa fa-exclamation-triangle"></i></div>
+          <div class="kpi-data">
+            <span class="kpi-value" id="kpi-unmatched">--</span>
+            <span class="kpi-label">Unmatched Invoices</span>
+          </div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="kpi-icon"><i class="fa fa-rupee-sign"></i></div>
+          <div class="kpi-data">
+            <span class="kpi-value" id="kpi-spend">--</span>
+            <span class="kpi-label">Total Spend (INR)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PENDING ACTIONS -->
+      <div class="section-row">
+        <div class="card">
+          <div class="card-header">
+            <i class="fa fa-clock"></i> Pending Approvals
+          </div>
+          <div class="card-body" id="pending-approvals">
+            <div class="loading-msg">Loading...</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <i class="fa fa-exclamation-circle"></i> Invoice Exceptions
+          </div>
+          <div class="card-body" id="invoice-exceptions">
+            <div class="loading-msg">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="card full-width">
+        <div class="card-header">
+          <i class="fa fa-bolt"></i> Quick Actions
+        </div>
+        <div class="quick-actions">
+          <a href="pages/vendors.html" class="qa-btn blue">
+            <i class="fa fa-plus"></i> Add Vendor
+          </a>
+          <a href="pages/rfq.html" class="qa-btn green">
+            <i class="fa fa-file-alt"></i> Create RFQ
+          </a>
+          <a href="pages/purchase_orders.html" class="qa-btn orange">
+            <i class="fa fa-shopping-cart"></i> Create PO
+          </a>
+          <a href="pages/invoices.html" class="qa-btn purple">
+            <i class="fa fa-file-invoice"></i> Upload Invoice
+          </a>
+          <a href="pages/quotations.html" class="qa-btn teal">
+            <i class="fa fa-balance-scale"></i> Compare Quotes
+          </a>
+        </div>
+      </div>
+
+    </div><!-- /content-body -->
+  </div><!-- /main-content -->
+
+  <script src="js/api.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

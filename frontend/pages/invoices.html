@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Invoices — Matrix S2P</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon"><i class="fa-solid fa-network-wired"></i></div>
+      <div class="logo-text"><span class="logo-main">Matrix S2P</span><span class="logo-sub">Comsec Pvt. Ltd.</span></div>
+    </div>
+   
+    <nav class="sidebar-nav">
+  <a href="../index.html"        class="nav-item"><i class="fa fa-chart-pie"></i><span>Dashboard</span></a>
+  <a href="vendors.html"         class="nav-item"><i class="fa fa-building"></i><span>Vendors</span></a>
+  <a href="rfq.html"             class="nav-item"><i class="fa fa-file-alt"></i><span>RFQ</span></a>
+  <a href="quotations.html"      class="nav-item"><i class="fa fa-balance-scale"></i><span>Quotations</span></a>
+  <a href="purchase_orders.html" class="nav-item"><i class="fa fa-shopping-cart"></i><span>Purchase Orders</span></a>
+  <a href="invoices.html"        class="nav-item active"><i class="fa fa-file-invoice"></i><span>Invoices</span></a>
+  <a href="payments.html"        class="nav-item"><i class="fa fa-money-bill-wave"></i><span>Payments</span></a>
+  <a href="performance.html"     class="nav-item"><i class="fa fa-star"></i><span>Performance</span></a>
+  <a href="ai_discovery.html"    class="nav-item"><i class="fa fa-robot"></i><span>AI Discovery</span></a>
+  <a href="sap_integration.html" class="nav-item"><i class="fa fa-plug"></i><span>SAP Integration</span></a>
+  <a href="contracts.html"       class="nav-item"><i class="fa fa-file-contract"></i><span>Contracts</span></a>
+  <a href="negotiations.html"    class="nav-item"><i class="fa fa-handshake"></i><span>Negotiations</span></a>
+  <a href="checklists.html"      class="nav-item"><i class="fa fa-tasks"></i><span>Checklists</span></a>
+  <a href="audit.html"           class="nav-item"><i class="fa fa-history"></i><span>Audit Trail</span></a>
+</nav>
+
+    <div class="sidebar-footer"><span><i class="fa fa-circle green-dot"></i> System Online</span></div>
+  </div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa fa-bars"></i></button>
+      <div class="topbar-title">
+        <h1>Invoice Reconciliation</h1>
+        <span>3-Way Match: PO ↔ GRN ↔ Invoice (BR-S2P-10)</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="document.getElementById('inv-modal').classList.add('open')">
+          <i class="fa fa-plus"></i> Add Invoice
+        </button>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <div class="card">
+        <div class="card-header"><i class="fa fa-file-invoice"></i> All Invoices</div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr><th>Ref</th><th>Invoice No.</th><th>Vendor</th><th>Date</th><th>Amount</th><th>Match Status</th><th>Payment</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="inv-table-body">
+              <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD INVOICE MODAL -->
+  <div class="modal-overlay" id="inv-modal">
+    <div class="modal" style="max-width:580px;">
+      <div class="modal-header">
+        <h2><i class="fa fa-file-invoice"></i> Record Invoice</h2>
+        <button class="modal-close" onclick="document.getElementById('inv-modal').classList.remove('open')">×</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Vendor Invoice Number *</label>
+          <input type="text" id="inv-number" placeholder="e.g. INV/2024/1234"/>
+        </div>
+        <div class="form-group">
+          <label>Vendor *</label>
+          <select id="inv-vendor"><option value="">-- Select --</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Link to PO</label>
+          <select id="inv-po"><option value="">-- Optional --</option></select>
+        </div>
+        <div class="form-group">
+          <label>Invoice Date *</label>
+          <input type="date" id="inv-date"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Due Date</label>
+          <input type="date" id="inv-due"/>
+        </div>
+        <div class="form-group">
+          <label>Total Amount (INR) *</label>
+          <input type="number" id="inv-amount" placeholder="e.g. 118000" oninput="calcInvTax()"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Subtotal (before tax)</label>
+          <input type="number" id="inv-subtotal" placeholder="e.g. 100000"/>
+        </div>
+        <div class="form-group">
+          <label>Tax Amount (GST)</label>
+          <input type="number" id="inv-tax" placeholder="e.g. 18000"/>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:20px;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="document.getElementById('inv-modal').classList.remove('open')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitInvoice()"><i class="fa fa-save"></i> Record Invoice</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    async function loadDropdowns() {
+      try {
+        const vData = await api.get("/vendors/");
+        const poData = await api.get("/purchase-orders/");
+        const vSel  = document.getElementById("inv-vendor");
+        const poSel = document.getElementById("inv-po");
+        vData.vendors.forEach(v => {
+          const o = new Option(`${v.vendor_code} — ${v.company_name}`, v.id);
+          vSel.appendChild(o);
+        });
+        poData.purchase_orders.forEach(p => {
+          const o = new Option(`${p.po_number} (${formatINR(p.total_amount)})`, p.id);
+          poSel.appendChild(o);
+        });
+      } catch(e) {}
+    }
+
+    async function loadInvoices() {
+      try {
+        const data  = await api.get("/invoices/");
+        const tbody = document.getElementById("inv-table-body");
+        if (!data.invoices.length) {
+          tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+            <i class="fa fa-file-invoice"></i><p>No invoices recorded yet</p></div></td></tr>`;
+          return;
+        }
+        tbody.innerHTML = data.invoices.map(inv => `
+          <tr>
+            <td><strong>${inv.internal_ref}</strong></td>
+            <td>${inv.invoice_number}${inv.is_duplicate ? ' <span style="color:var(--red);font-size:11px;">⚠️ DUP</span>' : ''}</td>
+            <td>Vendor #${inv.vendor_id}</td>
+            <td>${formatDate(inv.invoice_date)}</td>
+            <td><strong>${formatINR(inv.total_amount)}</strong></td>
+            <td>${badge(inv.match_status)}</td>
+            <td>${badge(inv.payment_status)}</td>
+            <td>
+              ${inv.match_status === 'Pending'
+                ? `<button class="btn btn-primary" style="padding:4px 10px;font-size:12px;"
+                     onclick="runMatch(${inv.id})">
+                     <i class="fa fa-sync"></i> Run Match
+                   </button>` : ''}
+              ${inv.match_status === 'Matched' && inv.payment_status === 'Unpaid'
+                ? `<a href="payments.html" class="btn btn-success" style="padding:4px 10px;font-size:12px;">
+                     <i class="fa fa-money-bill"></i> Pay
+                   </a>` : ''}
+            </td>
+          </tr>`).join('');
+      } catch(e) { showToast("Failed to load invoices", "error"); }
+    }
+
+    async function submitInvoice() {
+      const invNum  = document.getElementById("inv-number").value.trim();
+      const vendorId = document.getElementById("inv-vendor").value;
+      const amount  = document.getElementById("inv-amount").value;
+      const date    = document.getElementById("inv-date").value;
+      if (!invNum || !vendorId || !amount || !date) {
+        showToast("Invoice number, vendor, amount and date are required", "error"); return;
+      }
+      try {
+        const res = await api.post("/invoices/", {
+          invoice_number : invNum,
+          vendor_id      : parseInt(vendorId),
+          po_id          : parseInt(document.getElementById("inv-po").value) || null,
+          invoice_date   : date,
+          due_date       : document.getElementById("inv-due").value || null,
+          subtotal       : parseFloat(document.getElementById("inv-subtotal").value) || parseFloat(amount),
+          tax_amount     : parseFloat(document.getElementById("inv-tax").value) || 0,
+          total_amount   : parseFloat(amount)
+        });
+        if (res.warning) showToast(res.warning, "error");
+        else showToast(`✅ Invoice ${res.invoice.internal_ref} recorded!`, "success");
+        document.getElementById("inv-modal").classList.remove("open");
+        loadInvoices();
+      } catch(e) { showToast("Error: " + e.message, "error"); }
+    }
+
+    async function runMatch(id) {
+      try {
+        const res = await api.post(`/invoices/${id}/match`);
+        const msg = res.match_status === 'Matched'
+          ? `✅ 3-Way Match Passed!`
+          : `⚠️ Match Status: ${res.match_status} — ${res.issues.join(', ')}`;
+        showToast(msg, res.match_status === 'Matched' ? 'success' : 'error');
+        loadInvoices();
+      } catch(e) { showToast(e.message, "error"); }
+    }
+
+    document.getElementById("inv-date").value = new Date().toISOString().split('T')[0];
+    loadDropdowns();
+    loadInvoices();
+  </script>
+</body>
+</html>

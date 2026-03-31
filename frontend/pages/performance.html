@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vendor Performance — Matrix S2P</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon"><i class="fa-solid fa-network-wired"></i></div>
+      <div class="logo-text"><span class="logo-main">Matrix S2P</span><span class="logo-sub">Comsec Pvt. Ltd.</span></div>
+    </div>
+    
+   <nav class="sidebar-nav">
+  <a href="../index.html"        class="nav-item"><i class="fa fa-chart-pie"></i><span>Dashboard</span></a>
+  <a href="vendors.html"         class="nav-item"><i class="fa fa-building"></i><span>Vendors</span></a>
+  <a href="rfq.html"             class="nav-item"><i class="fa fa-file-alt"></i><span>RFQ</span></a>
+  <a href="quotations.html"      class="nav-item"><i class="fa fa-balance-scale"></i><span>Quotations</span></a>
+  <a href="purchase_orders.html" class="nav-item"><i class="fa fa-shopping-cart"></i><span>Purchase Orders</span></a>
+  <a href="invoices.html"        class="nav-item"><i class="fa fa-file-invoice"></i><span>Invoices</span></a>
+  <a href="payments.html"        class="nav-item"><i class="fa fa-money-bill-wave"></i><span>Payments</span></a>
+  <a href="performance.html"     class="nav-item active"><i class="fa fa-star"></i><span>Performance</span></a>
+  <a href="ai_discovery.html"    class="nav-item"><i class="fa fa-robot"></i><span>AI Discovery</span></a>
+  <a href="sap_integration.html" class="nav-item"><i class="fa fa-plug"></i><span>SAP Integration</span></a>
+  <a href="contracts.html"       class="nav-item"><i class="fa fa-file-contract"></i><span>Contracts</span></a>
+  <a href="negotiations.html"    class="nav-item"><i class="fa fa-handshake"></i><span>Negotiations</span></a>
+  <a href="checklists.html"      class="nav-item"><i class="fa fa-tasks"></i><span>Checklists</span></a>
+  <a href="audit.html"           class="nav-item"><i class="fa fa-history"></i><span>Audit Trail</span></a>
+</nav>
+
+    <div class="sidebar-footer"><span><i class="fa fa-circle green-dot"></i> System Online</span></div>
+  </div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa fa-bars"></i></button>
+      <div class="topbar-title">
+        <h1>Vendor Performance</h1>
+        <span>Automated KPI scoring engine (BR-S2P-13)</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="scoreAll()">
+          <i class="fa fa-sync"></i> Score All Vendors
+        </button>
+      </div>
+    </header>
+
+    <div class="content-body">
+
+      <!-- Weight Info -->
+      <div class="card">
+        <div class="card-header"><i class="fa fa-info-circle"></i> Scoring Formula</div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;text-align:center;">
+            <div style="padding:16px;background:#dbeafe;border-radius:10px;">
+              <div style="font-size:24px;font-weight:800;color:var(--blue)">35%</div>
+              <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">
+                <i class="fa fa-truck"></i> On-Time Delivery
+              </div>
+            </div>
+            <div style="padding:16px;background:#dcfce7;border-radius:10px;">
+              <div style="font-size:24px;font-weight:800;color:var(--green)">30%</div>
+              <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">
+                <i class="fa fa-check-double"></i> Quality Acceptance
+              </div>
+            </div>
+            <div style="padding:16px;background:#ede9fe;border-radius:10px;">
+              <div style="font-size:24px;font-weight:800;color:var(--purple)">20%</div>
+              <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">
+                <i class="fa fa-rupee-sign"></i> Price Competitiveness
+              </div>
+            </div>
+            <div style="padding:16px;background:#ffedd5;border-radius:10px;">
+              <div style="font-size:24px;font-weight:800;color:var(--orange)">15%</div>
+              <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">
+                <i class="fa fa-reply"></i> RFQ Response Rate
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="card">
+        <div class="card-header"><i class="fa fa-trophy"></i> Vendor Leaderboard</div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Rank</th><th>Vendor</th><th>Delivery</th>
+                <th>Quality</th><th>Pricing</th><th>Response</th>
+                <th>Overall</th><th>Grade</th><th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="perf-table-body">
+              <tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted);">
+                Click "Score All Vendors" to generate scores
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    function scoreBar(value, color) {
+      return `
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="background:#e2e8f0;border-radius:20px;height:8px;width:70px;overflow:hidden;">
+            <div style="background:${color};height:100%;width:${value}%;border-radius:20px;transition:width 0.5s;"></div>
+          </div>
+          <span style="font-size:13px;font-weight:600;">${value}</span>
+        </div>`;
+    }
+
+    function gradeColor(grade) {
+      if (grade.startsWith("A+")) return "#15803d";
+      if (grade.startsWith("A"))  return "#0d9488";
+      if (grade.startsWith("B"))  return "#1a56db";
+      if (grade.startsWith("C"))  return "#ea7800";
+      return "#dc2626";
+    }
+
+    async function scoreAll() {
+      const btn = event.target;
+      btn.disabled    = true;
+      btn.textContent = "⏳ Scoring...";
+      try {
+        const data  = await api.post("/vendors/score-all");
+        renderLeaderboard(data.leaderboard);
+        showToast(`✅ ${data.message}`, "success");
+      } catch(e) {
+        showToast("Error: " + e.message, "error");
+      } finally {
+        btn.disabled    = false;
+        btn.innerHTML   = '<i class="fa fa-sync"></i> Score All Vendors';
+      }
+    }
+
+    function renderLeaderboard(vendors) {
+      const tbody = document.getElementById("perf-table-body");
+      if (!vendors.length) {
+        tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
+          <i class="fa fa-star"></i><p>No approved vendors to score yet</p></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = vendors.map((v, i) => `
+        <tr style="${i === 0 ? 'background:#f0fdf4;' : ''}">
+          <td style="font-size:20px;text-align:center;">
+            ${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`}
+          </td>
+          <td>
+            <div style="font-weight:700;">${v.vendor_name}</div>
+            <div style="font-size:12px;color:var(--text-muted);">
+              ${v.period} &bull; ${v.total_orders} orders
+            </div>
+          </td>
+          <td>${scoreBar(v.delivery_score, 'var(--blue)')}</td>
+          <td>${scoreBar(v.quality_score,  'var(--green)')}</td>
+          <td>${scoreBar(v.pricing_score,  'var(--purple)')}</td>
+          <td>${scoreBar(v.response_score, 'var(--orange)')}</td>
+          <td>
+            <div style="font-size:22px;font-weight:800;
+                        color:${gradeColor(v.grade)};">
+              ${v.overall_score}
+            </div>
+          </td>
+          <td>
+            <span style="font-weight:700;font-size:12px;
+                         color:${gradeColor(v.grade)};">
+              ${v.grade}
+            </span>
+          </td>
+          <td>
+            <button class="btn btn-outline"
+                    style="padding:4px 10px;font-size:12px;"
+                    onclick="scoreOne(${v.vendor_id},'${v.vendor_name}')">
+              <i class="fa fa-redo"></i> Rescore
+            </button>
+          </td>
+        </tr>`).join('');
+    }
+
+    async function scoreOne(id, name) {
+      try {
+        const res = await api.post(`/vendors/${id}/score`);
+        showToast(`✅ ${name} rescored: ${res.result.overall_score}`, "success");
+        scoreAll();
+      } catch(e) { showToast(e.message, "error"); }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vendors — Matrix S2P</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon"><i class="fa-solid fa-network-wired"></i></div>
+      <div class="logo-text">
+        <span class="logo-main">Matrix S2P</span>
+        <span class="logo-sub">Comsec Pvt. Ltd.</span>
+      </div>
+    </div>
+   
+    <nav class="sidebar-nav">
+  <a href="../index.html"        class="nav-item"><i class="fa fa-chart-pie"></i><span>Dashboard</span></a>
+  <a href="vendors.html"         class="nav-item active"><i class="fa fa-building"></i><span>Vendors</span></a>
+  <a href="rfq.html"             class="nav-item"><i class="fa fa-file-alt"></i><span>RFQ</span></a>
+  <a href="quotations.html"      class="nav-item"><i class="fa fa-balance-scale"></i><span>Quotations</span></a>
+  <a href="purchase_orders.html" class="nav-item"><i class="fa fa-shopping-cart"></i><span>Purchase Orders</span></a>
+  <a href="invoices.html"        class="nav-item"><i class="fa fa-file-invoice"></i><span>Invoices</span></a>
+  <a href="payments.html"        class="nav-item"><i class="fa fa-money-bill-wave"></i><span>Payments</span></a>
+  <a href="performance.html"     class="nav-item"><i class="fa fa-star"></i><span>Performance</span></a>
+  <a href="ai_discovery.html"    class="nav-item"><i class="fa fa-robot"></i><span>AI Discovery</span></a>
+  <a href="sap_integration.html" class="nav-item"><i class="fa fa-plug"></i><span>SAP Integration</span></a>
+  <a href="contracts.html"       class="nav-item"><i class="fa fa-file-contract"></i><span>Contracts</span></a>
+  <a href="negotiations.html"    class="nav-item"><i class="fa fa-handshake"></i><span>Negotiations</span></a>
+  <a href="checklists.html"      class="nav-item"><i class="fa fa-tasks"></i><span>Checklists</span></a>
+  <a href="audit.html"           class="nav-item"><i class="fa fa-history"></i><span>Audit Trail</span></a>
+</nav>
+
+    <div class="sidebar-footer"><span><i class="fa fa-circle green-dot"></i> System Online</span></div>
+  </div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa fa-bars"></i></button>
+      <div class="topbar-title">
+        <h1>Vendor Master</h1>
+        <span>Manage & approve vendors (BR-S2P-02)</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openModal()">
+          <i class="fa fa-plus"></i> Add Vendor
+        </button>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <!-- Filters -->
+      <div class="card">
+        <div class="card-body" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+          <select id="filter-status" onchange="loadVendors()" style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
+            <option value="">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Under Review">Under Review</option>
+            <option value="Approved">Approved</option>
+            <option value="Blacklisted">Blacklisted</option>
+          </select>
+          <select id="filter-category" onchange="loadVendors()" style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
+            <option value="">All Categories</option>
+            <option value="Electronic">Electronic</option>
+            <option value="Mechanical">Mechanical</option>
+            <option value="Both">Both</option>
+          </select>
+          <span id="vendor-count" style="color:var(--text-muted);font-size:14px;margin-left:auto;"></span>
+        </div>
+      </div>
+
+      <!-- Vendor Table -->
+      <div class="card">
+        <div class="card-header"><i class="fa fa-building"></i> Vendor List</div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Code</th><th>Company</th><th>Category</th>
+                <th>Type</th><th>OEM</th><th>City</th>
+                <th>Status</th><th>Score</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="vendor-table-body">
+              <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:30px;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD VENDOR MODAL -->
+  <div class="modal-overlay" id="add-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2><i class="fa fa-building"></i> Add New Vendor</h2>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Company Name *</label>
+          <input type="text" id="v-company" placeholder="e.g. Techno Electronics Pvt Ltd"/>
+        </div>
+        <div class="form-group">
+          <label>Contact Person</label>
+          <input type="text" id="v-contact" placeholder="e.g. Ramesh Shah"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" id="v-email" placeholder="vendor@company.in"/>
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="text" id="v-phone" placeholder="9876543210"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category *</label>
+          <select id="v-category">
+            <option value="Electronic">Electronic</option>
+            <option value="Mechanical">Mechanical</option>
+            <option value="Both">Both</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Vendor Type</label>
+          <select id="v-type">
+            <option value="Distributor">Distributor</option>
+            <option value="OEM">OEM</option>
+            <option value="Trader">Trader</option>
+            <option value="Service">Service</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>City</label>
+          <input type="text" id="v-city" placeholder="Ahmedabad"/>
+        </div>
+        <div class="form-group">
+          <label>State</label>
+          <input type="text" id="v-state" placeholder="Gujarat"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>GST Number</label>
+          <input type="text" id="v-gst" placeholder="24AABCT1234A1Z5"/>
+        </div>
+        <div class="form-group">
+          <label>OEM Brand (if applicable)</label>
+          <input type="text" id="v-oem-brand" placeholder="e.g. Hikvision"/>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:8px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;">
+          <input type="checkbox" id="v-oem-approved"/> OEM Approved
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;">
+          <input type="checkbox" id="v-msme"/> MSME Registered
+        </label>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:20px;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitVendor()">
+          <i class="fa fa-save"></i> Save Vendor
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPROVE MODAL -->
+  <div class="modal-overlay" id="approve-modal">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header">
+        <h2><i class="fa fa-check-circle"></i> Approve Vendor</h2>
+        <button class="modal-close" onclick="closeApproveModal()">×</button>
+      </div>
+      <div class="form-group">
+        <label>Approver Name *</label>
+        <input type="text" id="approver-name" placeholder="e.g. Bhavesh Shah"/>
+      </div>
+      <input type="hidden" id="approve-vendor-id"/>
+      <div style="display:flex;gap:12px;margin-top:16px;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="closeApproveModal()">Cancel</button>
+        <button class="btn btn-success" onclick="confirmApprove()">
+          <i class="fa fa-check"></i> Approve
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    async function loadVendors() {
+      const status   = document.getElementById("filter-status").value;
+      const category = document.getElementById("filter-category").value;
+      let url = "/vendors/?";
+      if (status)   url += `status=${status}&`;
+      if (category) url += `category=${category}`;
+
+      try {
+        const data = await api.get(url);
+        document.getElementById("vendor-count").textContent =
+          `${data.total} vendor(s) found`;
+        const tbody = document.getElementById("vendor-table-body");
+
+        if (!data.vendors.length) {
+          tbody.innerHTML = `<tr><td colspan="9">
+            <div class="empty-state"><i class="fa fa-building"></i>
+            <p>No vendors found</p></div></td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = data.vendors.map(v => `
+          <tr>
+            <td><strong>${v.vendor_code}</strong></td>
+            <td>
+              <div style="font-weight:600;">${v.company_name}</div>
+              <div style="font-size:12px;color:var(--text-muted);">${v.email}</div>
+            </td>
+            <td>${v.category}</td>
+            <td>${v.vendor_type}</td>
+            <td>${v.oem_approved
+              ? `<span style="color:var(--green)"><i class="fa fa-check-circle"></i> ${v.oem_brand||''}</span>`
+              : '<span style="color:var(--text-muted)">—</span>'}</td>
+            <td>${v.city||'—'}</td>
+            <td>${badge(v.status)}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <div style="background:#e2e8f0;border-radius:20px;height:6px;width:60px;overflow:hidden;">
+                  <div style="background:var(--green);height:100%;width:${v.performance_score||0}%"></div>
+                </div>
+                <span style="font-size:12px;">${v.performance_score||0}</span>
+              </div>
+            </td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                ${v.status === 'Pending' || v.status === 'Under Review'
+                  ? `<button class="btn btn-success" style="padding:5px 10px;font-size:12px;"
+                       onclick="openApproveModal(${v.id})">
+                       <i class="fa fa-check"></i> Approve
+                     </button>` : ''}
+                ${v.status !== 'Blacklisted'
+                  ? `<button class="btn btn-danger" style="padding:5px 10px;font-size:12px;"
+                       onclick="blacklistVendor(${v.id}, '${v.company_name}')">
+                       <i class="fa fa-ban"></i>
+                     </button>` : ''}
+              </div>
+            </td>
+          </tr>`).join('');
+      } catch(e) {
+        showToast("Failed to load vendors: " + e.message, "error");
+      }
+    }
+
+    function openModal()  { document.getElementById("add-modal").classList.add("open"); }
+    function closeModal() { document.getElementById("add-modal").classList.remove("open"); }
+
+    function openApproveModal(id) {
+      document.getElementById("approve-vendor-id").value = id;
+      document.getElementById("approve-modal").classList.add("open");
+    }
+    function closeApproveModal() {
+      document.getElementById("approve-modal").classList.remove("open");
+    }
+
+    async function submitVendor() {
+      const company = document.getElementById("v-company").value.trim();
+      const email   = document.getElementById("v-email").value.trim();
+      if (!company || !email) { showToast("Company name and email are required", "error"); return; }
+
+      try {
+        await api.post("/vendors/", {
+          company_name   : company,
+          contact_person : document.getElementById("v-contact").value,
+          email          : email,
+          phone          : document.getElementById("v-phone").value,
+          category       : document.getElementById("v-category").value,
+          vendor_type    : document.getElementById("v-type").value,
+          city           : document.getElementById("v-city").value,
+          state          : document.getElementById("v-state").value,
+          gst_number     : document.getElementById("v-gst").value,
+          oem_brand      : document.getElementById("v-oem-brand").value,
+          oem_approved   : document.getElementById("v-oem-approved").checked,
+          msme_registered: document.getElementById("v-msme").checked,
+        });
+        showToast("✅ Vendor added successfully!", "success");
+        closeModal();
+        loadVendors();
+      } catch(e) {
+        showToast("Error: " + e.message, "error");
+      }
+    }
+
+    async function confirmApprove() {
+      const id       = document.getElementById("approve-vendor-id").value;
+      const approver = document.getElementById("approver-name").value.trim();
+      if (!approver) { showToast("Enter approver name", "error"); return; }
+      try {
+        await api.post(`/vendors/${id}/approve?approver=${encodeURIComponent(approver)}`);
+        showToast("✅ Vendor approved!", "success");
+        closeApproveModal();
+        loadVendors();
+      } catch(e) { showToast("Error: " + e.message, "error"); }
+    }
+
+    async function blacklistVendor(id, name) {
+      if (!confirm(`Blacklist ${name}?`)) return;
+      try {
+        await api.post(`/vendors/${id}/blacklist`);
+        showToast(`${name} blacklisted`, "info");
+        loadVendors();
+      } catch(e) { showToast("Error: " + e.message, "error"); }
+    }
+
+    loadVendors();
+  </script>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contracts — Matrix S2P</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon"><i class="fa-solid fa-network-wired"></i></div>
+      <div class="logo-text"><span class="logo-main">Matrix S2P</span><span class="logo-sub">Comsec Pvt. Ltd.</span></div>
+    </div>
+   <nav class="sidebar-nav">
+  <a href="../index.html"        class="nav-item"><i class="fa fa-chart-pie"></i><span>Dashboard</span></a>
+  <a href="vendors.html"         class="nav-item"><i class="fa fa-building"></i><span>Vendors</span></a>
+  <a href="rfq.html"             class="nav-item"><i class="fa fa-file-alt"></i><span>RFQ</span></a>
+  <a href="quotations.html"      class="nav-item"><i class="fa fa-balance-scale"></i><span>Quotations</span></a>
+  <a href="purchase_orders.html" class="nav-item"><i class="fa fa-shopping-cart"></i><span>Purchase Orders</span></a>
+  <a href="invoices.html"        class="nav-item"><i class="fa fa-file-invoice"></i><span>Invoices</span></a>
+  <a href="payments.html"        class="nav-item"><i class="fa fa-money-bill-wave"></i><span>Payments</span></a>
+  <a href="performance.html"     class="nav-item"><i class="fa fa-star"></i><span>Performance</span></a>
+  <a href="ai_discovery.html"    class="nav-item"><i class="fa fa-robot"></i><span>AI Discovery</span></a>
+  <a href="sap_integration.html" class="nav-item"><i class="fa fa-plug"></i><span>SAP Integration</span></a>
+  <a href="contracts.html"       class="nav-item active"><i class="fa fa-file-contract"></i><span>Contracts</span></a>
+  <a href="negotiations.html"    class="nav-item"><i class="fa fa-handshake"></i><span>Negotiations</span></a>
+  <a href="checklists.html"      class="nav-item"><i class="fa fa-tasks"></i><span>Checklists</span></a>
+  <a href="audit.html"           class="nav-item"><i class="fa fa-history"></i><span>Audit Trail</span></a>
+</nav>
+    <div class="sidebar-footer"><span><i class="fa fa-circle green-dot"></i> System Online</span></div>
+  </div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa fa-bars"></i></button>
+      <div class="topbar-title">
+        <h1>Contract Management</h1>
+        <span>Centralised contract repository with expiry alerts (BR-S2P-07)</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="document.getElementById('contract-modal').classList.add('open')">
+          <i class="fa fa-plus"></i> New Contract
+        </button>
+      </div>
+    </header>
+
+    <div class="content-body">
+
+      <!-- KPI Row -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="kpi-card blue">
+          <div class="kpi-icon"><i class="fa fa-file-contract"></i></div>
+          <div class="kpi-data"><span class="kpi-value" id="kpi-total">—</span><span class="kpi-label">Total Contracts</span></div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-icon"><i class="fa fa-check-circle"></i></div>
+          <div class="kpi-data"><span class="kpi-value" id="kpi-active">—</span><span class="kpi-label">Active</span></div>
+        </div>
+        <div class="kpi-card orange">
+          <div class="kpi-icon"><i class="fa fa-exclamation-triangle"></i></div>
+          <div class="kpi-data"><span class="kpi-value" id="kpi-expiring">—</span><span class="kpi-label">Expiring Soon</span></div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-icon"><i class="fa fa-times-circle"></i></div>
+          <div class="kpi-data"><span class="kpi-value" id="kpi-expired">—</span><span class="kpi-label">Expired</span></div>
+        </div>
+      </div>
+
+      <!-- Expiry Alerts Banner -->
+      <div id="alert-banner" style="display:none;" class="card">
+        <div class="card-header" style="background:#fff7ed;color:#ea7800;">
+          <i class="fa fa-bell"></i> Renewal Alerts
+        </div>
+        <div class="card-body" id="alert-list"></div>
+      </div>
+
+      <!-- Filter + Table -->
+      <div class="card">
+        <div class="card-body" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+          <select id="filter-status" onchange="loadContracts()"
+                  style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
+            <option value="">All Status</option>
+            <option value="Draft">Draft</option>
+            <option value="Active">Active</option>
+            <option value="Expiring Soon">Expiring Soon</option>
+            <option value="Expired">Expired</option>
+            <option value="Terminated">Terminated</option>
+          </select>
+          <select id="filter-type" onchange="loadContracts()"
+                  style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
+            <option value="">All Types</option>
+            <option value="Annual">Annual</option>
+            <option value="AMC">AMC</option>
+            <option value="Rate Contract">Rate Contract</option>
+            <option value="One-Time">One-Time</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><i class="fa fa-file-contract"></i> Contract Repository</div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Contract No.</th><th>Vendor</th><th>Title</th><th>Type</th>
+                <th>Start</th><th>End</th><th>Days Left</th><th>Value</th>
+                <th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="contract-tbody">
+              <tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATE CONTRACT MODAL -->
+  <div class="modal-overlay" id="contract-modal">
+    <div class="modal" style="max-width:620px;">
+      <div class="modal-header">
+        <h2><i class="fa fa-file-contract"></i> New Contract</h2>
+        <button class="modal-close" onclick="document.getElementById('contract-modal').classList.remove('open')">×</button>
+      </div>
+      <div class="form-group">
+        <label>Contract Title *</label>
+        <input type="text" id="c-title" placeholder="e.g. Annual Supply Agreement — CCTV Components"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Vendor *</label>
+          <select id="c-vendor"><option value="">-- Select Vendor --</option></select>
+        </div>
+        <div class="form-group">
+          <label>Contract Type</label>
+          <select id="c-type">
+            <option value="Annual">Annual</option>
+            <option value="AMC">AMC (Maintenance)</option>
+            <option value="Rate Contract">Rate Contract</option>
+            <option value="One-Time">One-Time</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start Date *</label>
+          <input type="date" id="c-start"/>
+        </div>
+        <div class="form-group">
+          <label>End Date *</label>
+          <input type="date" id="c-end"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Contract Value (INR)</label>
+          <input type="number" id="c-value" placeholder="e.g. 500000"/>
+        </div>
+        <div class="form-group">
+          <label>Renewal Alert (days before expiry)</label>
+          <input type="number" id="c-alert" value="30"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="c-notes" rows="2" placeholder="Key terms, SLAs, special conditions..."></textarea>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:20px;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="document.getElementById('contract-modal').classList.remove('open')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitContract()"><i class="fa fa-save"></i> Save Contract</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    async function loadContracts() {
+      try {
+        const data   = await api.get("/contracts/");
+        const status = document.getElementById("filter-status").value;
+        const type   = document.getElementById("filter-type").value;
+
+        // KPIs
+        document.getElementById("kpi-total").textContent    = data.total;
+        document.getElementById("kpi-expiring").textContent = data.expiring_soon;
+        document.getElementById("kpi-expired").textContent  = data.expired;
+        document.getElementById("kpi-active").textContent   =
+          data.contracts.filter(c => c.status === "Active").length;
+
+        // Alerts
+        const alerts = data.contracts.filter(c =>
+          c.status === "Expiring Soon" || c.status === "Expired");
+        if (alerts.length) {
+          document.getElementById("alert-banner").style.display = "block";
+          document.getElementById("alert-list").innerHTML = alerts.map(a => `
+            <div style="display:flex;justify-content:space-between;align-items:center;
+                        padding:10px 0;border-bottom:1px solid var(--border);">
+              <div>
+                <strong>${a.contract_number}</strong> — ${a.vendor_name}<br/>
+                <span style="font-size:13px;color:var(--text-muted);">${a.title}</span>
+              </div>
+              <div style="text-align:right;">
+                <span style="color:${a.days_remaining < 0 ? 'var(--red)' : 'var(--orange)'};font-weight:700;">
+                  ${a.days_remaining < 0
+                    ? `Expired ${Math.abs(a.days_remaining)} days ago`
+                    : `Expires in ${a.days_remaining} days`}
+                </span><br/>
+                <span style="font-size:12px;color:var(--text-muted);">${a.end_date}</span>
+              </div>
+            </div>`).join('');
+        }
+
+        // Filter & render table
+        let contracts = data.contracts;
+        if (status) contracts = contracts.filter(c => c.status === status);
+        if (type)   contracts = contracts.filter(c => c.contract_type === type);
+
+        const tbody = document.getElementById("contract-tbody");
+        if (!contracts.length) {
+          tbody.innerHTML = `<tr><td colspan="10">
+            <div class="empty-state"><i class="fa fa-file-contract"></i>
+            <p>No contracts found</p></div></td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = contracts.map(c => `
+          <tr style="${c.status==='Expiring Soon'?'background:#fff7ed;':
+                       c.status==='Expired'?'background:#fef2f2;':''}">
+            <td><strong>${c.contract_number}</strong></td>
+            <td>${c.vendor_name}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                title="${c.title}">${c.title}</td>
+            <td><span style="background:#f1f5f9;padding:3px 8px;border-radius:20px;font-size:12px;">
+              ${c.contract_type}</span></td>
+            <td>${formatDate(c.start_date)}</td>
+            <td>${formatDate(c.end_date)}</td>
+            <td>
+              <span style="font-weight:700;
+                color:${c.days_remaining < 0 ? 'var(--red)' :
+                        c.days_remaining < 30 ? 'var(--orange)' : 'var(--green)'}">
+                ${c.days_remaining < 0
+                  ? `Expired`
+                  : `${c.days_remaining}d`}
+              </span>
+            </td>
+            <td>${c.contract_value ? formatINR(c.contract_value) : '—'}</td>
+            <td>${badge(c.status)}</td>
+            <td>
+              ${c.status !== 'Terminated' && c.status !== 'Expired'
+                ? `<button class="btn btn-danger" style="padding:4px 10px;font-size:12px;"
+                     onclick="terminateContract(${c.id},'${c.contract_number}')">
+                     <i class="fa fa-times"></i> Terminate
+                   </button>` : '—'}
+            </td>
+          </tr>`).join('');
+      } catch(e) { showToast("Failed to load contracts: " + e.message, "error"); }
+    }
+
+    async function loadVendorOptions() {
+      try {
+        const data = await api.get("/vendors/");
+        const sel  = document.getElementById("c-vendor");
+        data.vendors.forEach(v =>
+          sel.appendChild(new Option(`${v.vendor_code} — ${v.company_name}`, v.id)));
+      } catch(e) {}
+    }
+
+    async function submitContract() {
+      const title   = document.getElementById("c-title").value.trim();
+      const vendor  = document.getElementById("c-vendor").value;
+      const start   = document.getElementById("c-start").value;
+      const end     = document.getElementById("c-end").value;
+      if (!title || !vendor || !start || !end) {
+        showToast("Title, vendor, start and end date required", "error"); return;
+      }
+      try {
+        const res = await api.post("/contracts/", {
+          title              : title,
+          vendor_id          : parseInt(vendor),
+          contract_type      : document.getElementById("c-type").value,
+          start_date         : start,
+          end_date           : end,
+          contract_value     : parseFloat(document.getElementById("c-value").value) || null,
+          renewal_alert_days : parseInt(document.getElementById("c-alert").value) || 30,
+          notes              : document.getElementById("c-notes").value
+        });
+        showToast(`✅ ${res.contract_number} created!`, "success");
+        document.getElementById("contract-modal").classList.remove("open");
+        loadContracts();
+      } catch(e) { showToast("Error: " + e.message, "error"); }
+    }
+
+    async function terminateContract(id, num) {
+      if (!confirm(`Terminate contract ${num}?`)) return;
+      try {
+        await api.post(`/contracts/${id}/terminate`);
+        showToast(`Contract ${num} terminated`, "info");
+        loadContracts();
+      } catch(e) { showToast(e.message, "error"); }
+    }
+
+    document.getElementById("c-start").value = new Date().toISOString().split('T')[0];
+    loadVendorOptions();
+    loadContracts();
+  </script>
+</body>
+</html>

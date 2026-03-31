@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payments — Matrix S2P</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon"><i class="fa-solid fa-network-wired"></i></div>
+      <div class="logo-text"><span class="logo-main">Matrix S2P</span><span class="logo-sub">Comsec Pvt. Ltd.</span></div>
+    </div>
+    
+     <nav class="sidebar-nav">
+  <a href="../index.html"        class="nav-item"><i class="fa fa-chart-pie"></i><span>Dashboard</span></a>
+  <a href="vendors.html"         class="nav-item"><i class="fa fa-building"></i><span>Vendors</span></a>
+  <a href="rfq.html"             class="nav-item"><i class="fa fa-file-alt"></i><span>RFQ</span></a>
+  <a href="quotations.html"      class="nav-item"><i class="fa fa-balance-scale"></i><span>Quotations</span></a>
+  <a href="purchase_orders.html" class="nav-item"><i class="fa fa-shopping-cart"></i><span>Purchase Orders</span></a>
+  <a href="invoices.html"        class="nav-item"><i class="fa fa-file-invoice"></i><span>Invoices</span></a>
+  <a href="payments.html"        class="nav-item active"><i class="fa fa-money-bill-wave"></i><span>Payments</span></a>
+  <a href="performance.html"     class="nav-item"><i class="fa fa-star"></i><span>Performance</span></a>
+  <a href="ai_discovery.html"    class="nav-item"><i class="fa fa-robot"></i><span>AI Discovery</span></a>
+  <a href="sap_integration.html" class="nav-item"><i class="fa fa-plug"></i><span>SAP Integration</span></a>
+  <a href="contracts.html"       class="nav-item"><i class="fa fa-file-contract"></i><span>Contracts</span></a>
+  <a href="negotiations.html"    class="nav-item"><i class="fa fa-handshake"></i><span>Negotiations</span></a>
+  <a href="checklists.html"      class="nav-item"><i class="fa fa-tasks"></i><span>Checklists</span></a>
+  <a href="audit.html"           class="nav-item"><i class="fa fa-history"></i><span>Audit Trail</span></a>
+</nav>
+
+    <div class="sidebar-footer"><span><i class="fa fa-circle green-dot"></i> System Online</span></div>
+  </div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa fa-bars"></i></button>
+      <div class="topbar-title">
+        <h1>Payment Tracking</h1>
+        <span>End-to-end payment lifecycle (BR-S2P-11)</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="document.getElementById('pay-modal').classList.add('open')">
+          <i class="fa fa-plus"></i> Record Payment
+        </button>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <div class="card">
+        <div class="card-header"><i class="fa fa-money-bill-wave"></i> Payment History</div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr><th>Ref</th><th>Invoice</th><th>Amount</th><th>Mode</th><th>Date</th><th>Bank Ref</th><th>Status</th></tr>
+            </thead>
+            <tbody id="pay-table-body">
+              <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAYMENT MODAL -->
+  <div class="modal-overlay" id="pay-modal">
+    <div class="modal" style="max-width:500px;">
+      <div class="modal-header">
+        <h2><i class="fa fa-money-bill-wave"></i> Record Payment</h2>
+        <button class="modal-close" onclick="document.getElementById('pay-modal').classList.remove('open')">×</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Invoice *</label>
+          <select id="pay-invoice"><option value="">-- Select Invoice --</option></select>
+        </div>
+        <div class="form-group">
+          <label>Vendor *</label>
+          <select id="pay-vendor"><option value="">-- Select Vendor --</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Amount (INR) *</label>
+          <input type="number" id="pay-amount" placeholder="e.g. 118000"/>
+        </div>
+        <div class="form-group">
+          <label>Payment Mode</label>
+          <select id="pay-mode">
+            <option>NEFT</option><option>RTGS</option>
+            <option>IMPS</option><option>Cheque</option><option>UPI</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Payment Date *</label>
+          <input type="date" id="pay-date"/>
+        </div>
+        <div class="form-group">
+          <label>Bank Reference No.</label>
+          <input type="text" id="pay-bank-ref" placeholder="e.g. NEFT12345"/>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:20px;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="document.getElementById('pay-modal').classList.remove('open')">Cancel</button>
+        <button class="btn btn-success" onclick="submitPayment()"><i class="fa fa-check"></i> Record Payment</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    async function loadPayments() {
+      try {
+        const data  = await api.get("/invoices/payments/");
+        const tbody = document.getElementById("pay-table-body");
+        if (!data.payments.length) {
+          tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+            <i class="fa fa-money-bill-wave"></i><p>No payments recorded yet</p></div></td></tr>`;
+          return;
+        }
+        tbody.innerHTML = data.payments.map(p => `
+          <tr>
+            <td><strong>${p.payment_ref}</strong></td>
+            <td>Invoice #${p.invoice_id}</td>
+            <td><strong style="color:var(--green)">${formatINR(p.amount)}</strong></td>
+            <td>${p.payment_mode}</td>
+            <td>${formatDate(p.payment_date)}</td>
+            <td>${p.bank_reference || '—'}</td>
+            <td>${badge(p.status)}</td>
+          </tr>`).join('');
+      } catch(e) { showToast("Failed to load payments", "error"); }
+    }
+
+    async function loadPaymentDropdowns() {
+      try {
+        const invData = await api.get("/invoices/");
+        const venData = await api.get("/vendors/");
+        const iSel = document.getElementById("pay-invoice");
+        const vSel = document.getElementById("pay-vendor");
+        invData.invoices
+          .filter(i => i.payment_status !== 'Paid')
+          .forEach(i => iSel.appendChild(new Option(`${i.internal_ref} — ${formatINR(i.total_amount)}`, i.id)));
+        venData.vendors.forEach(v =>
+          vSel.appendChild(new Option(`${v.vendor_code} — ${v.company_name}`, v.id)));
+      } catch(e) {}
+    }
+
+    async function submitPayment() {
+      const invId   = document.getElementById("pay-invoice").value;
+      const vendId  = document.getElementById("pay-vendor").value;
+      const amount  = document.getElementById("pay-amount").value;
+      const date    = document.getElementById("pay-date").value;
+      if (!invId || !vendId || !amount || !date) {
+        showToast("All required fields must be filled", "error"); return;
+      }
+      try {
+        const res = await api.post("/invoices/payments/", {
+          invoice_id    : parseInt(invId),
+          vendor_id     : parseInt(vendId),
+          amount        : parseFloat(amount),
+          payment_mode  : document.getElementById("pay-mode").value,
+          payment_date  : date,
+          bank_reference: document.getElementById("pay-bank-ref").value || null
+        });
+        showToast(`✅ Payment ${res.payment.payment_ref} recorded!`, "success");
+        document.getElementById("pay-modal").classList.remove("open");
+        loadPayments();
+      } catch(e) { showToast("Error: " + e.message, "error"); }
+    }
+
+    document.getElementById("pay-date").value = new Date().toISOString().split('T')[0];
+    loadPaymentDropdowns();
+    loadPayments();
+  </script>
+</body>
+</html>

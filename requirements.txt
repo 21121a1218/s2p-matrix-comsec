@@ -1,0 +1,33 @@
+# Web Framework
+fastapi==0.111.0
+uvicorn==0.29.0
+
+# Database
+sqlalchemy==2.0.30
+pymysql==1.1.0
+cryptography==42.0.5
+
+# Data Validation
+pydantic==2.7.1
+pydantic-settings==2.2.1
+
+# Environment Variables
+python-dotenv==1.0.1
+
+# Date/Time utilities
+python-dateutil==2.9.0
+
+# AI/ML (lightweight, free)
+scikit-learn==1.4.2
+numpy==1.26.4
+pandas==2.2.2
+
+# Email (for RFQ distribution)
+jinja2==3.1.4
+
+# HTTP requests (for SAP mock)
+httpx==0.27.0
+
+# File handling
+python-multipart==0.0.9
+openpyxl==3.1.2

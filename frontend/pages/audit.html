@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Audit Trail — Matrix S2P</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon"><i class="fa-solid fa-network-wired"></i></div>
+      <div class="logo-text"><span class="logo-main">Matrix S2P</span><span class="logo-sub">Comsec Pvt. Ltd.</span></div>
+    </div>
+    <nav class="sidebar-nav">
+  <a href="../index.html"        class="nav-item"><i class="fa fa-chart-pie"></i><span>Dashboard</span></a>
+  <a href="vendors.html"         class="nav-item"><i class="fa fa-building"></i><span>Vendors</span></a>
+  <a href="rfq.html"             class="nav-item"><i class="fa fa-file-alt"></i><span>RFQ</span></a>
+  <a href="quotations.html"      class="nav-item"><i class="fa fa-balance-scale"></i><span>Quotations</span></a>
+  <a href="purchase_orders.html" class="nav-item"><i class="fa fa-shopping-cart"></i><span>Purchase Orders</span></a>
+  <a href="invoices.html"        class="nav-item"><i class="fa fa-file-invoice"></i><span>Invoices</span></a>
+  <a href="payments.html"        class="nav-item"><i class="fa fa-money-bill-wave"></i><span>Payments</span></a>
+  <a href="performance.html"     class="nav-item"><i class="fa fa-star"></i><span>Performance</span></a>
+  <a href="ai_discovery.html"    class="nav-item"><i class="fa fa-robot"></i><span>AI Discovery</span></a>
+  <a href="sap_integration.html" class="nav-item"><i class="fa fa-plug"></i><span>SAP Integration</span></a>
+  <a href="contracts.html"       class="nav-item"><i class="fa fa-file-contract"></i><span>Contracts</span></a>
+  <a href="negotiations.html"    class="nav-item"><i class="fa fa-handshake"></i><span>Negotiations</span></a>
+  <a href="checklists.html"      class="nav-item"><i class="fa fa-tasks"></i><span>Checklists</span></a>
+  <a href="audit.html"           class="nav-item active"><i class="fa fa-history"></i><span>Audit Trail</span></a>
+</nav>
+    <div class="sidebar-footer"><span><i class="fa fa-circle green-dot"></i> System Online</span></div>
+  </div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa fa-bars"></i></button>
+      <div class="topbar-title">
+        <h1>Audit Trail</h1>
+        <span>Full transaction log for compliance (NFR-06)</span>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <div class="card">
+        <div class="card-body" style="display:flex;gap:12px;flex-wrap:wrap;">
+          <select id="audit-table" onchange="loadAudit()"
+                  style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
+            <option value="">All Tables</option>
+            <option value="vendors">Vendors</option>
+            <option value="rfq">RFQ</option>
+            <option value="purchase_orders">Purchase Orders</option>
+            <option value="invoices">Invoices</option>
+            <option value="payments">Payments</option>
+            <option value="contracts">Contracts</option>
+          </select>
+          <select id="audit-action" onchange="loadAudit()"
+                  style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
+            <option value="">All Actions</option>
+            <option value="CREATE">CREATE</option>
+            <option value="UPDATE">UPDATE</option>
+            <option value="APPROVE">APPROVE</option>
+            <option value="REJECT">REJECT</option>
+            <option value="DELETE">DELETE</option>
+            <option value="MATCH">MATCH</option>
+            <option value="SYNC">SYNC</option>
+          </select>
+          <button class="btn btn-outline" onclick="loadAudit()">
+            <i class="fa fa-refresh"></i> Refresh
+          </button>
+          <span id="audit-count" style="margin-left:auto;font-size:14px;color:var(--text-muted);align-self:center;"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><i class="fa fa-history"></i> Transaction Log</div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr><th>#</th><th>Time</th><th>Table</th><th>Record</th><th>Action</th><th>By</th><th>Details</th></tr>
+            </thead>
+            <tbody id="audit-tbody">
+              <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    const actionColors = {
+      CREATE : "#dbeafe", APPROVE: "#dcfce7", REJECT : "#fee2e2",
+      UPDATE : "#fef9c3", DELETE : "#fee2e2", MATCH  : "#ede9fe",
+      SYNC   : "#ccfbf1", SEND   : "#dbeafe"
+    };
+    const actionTextColors = {
+      CREATE : "#1e40af", APPROVE: "#15803d", REJECT : "#991b1b",
+      UPDATE : "#854d0e", DELETE : "#991b1b", MATCH  : "#5b21b6",
+      SYNC   : "#0f766e", SEND   : "#1e40af"
+    };
+
+    async function loadAudit() {
+      const table  = document.getElementById("audit-table").value;
+      const action = document.getElementById("audit-action").value;
+      let url = "/audit/?limit=200";
+      if (table)  url += `&table_name=${table}`;
+      if (action) url += `&action=${action}`;
+
+      try {
+        const data  = await api.get(url);
+        document.getElementById("audit-count").textContent =
+          `${data.total} record(s)`;
+        const tbody = document.getElementById("audit-tbody");
+
+        if (!data.logs.length) {
+          tbody.innerHTML = `<tr><td colspan="7">
+            <div class="empty-state"><i class="fa fa-history"></i>
+            <p>No audit records yet. Actions will appear here automatically.</p>
+            </div></td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = data.logs.map(l => `
+          <tr>
+            <td style="color:var(--text-muted);font-size:12px;">${l.id}</td>
+            <td style="font-size:12px;white-space:nowrap;">${l.changed_at}</td>
+            <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;">
+              ${l.table}</code></td>
+            <td style="font-size:13px;">#${l.record_id}</td>
+            <td>
+              <span style="background:${actionColors[l.action]||'#f1f5f9'};
+                           color:${actionTextColors[l.action]||'#475569'};
+                           padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">
+                ${l.action}
+              </span>
+            </td>
+            <td style="font-size:13px;">${l.changed_by || 'system'}</td>
+            <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;">
+              ${l.new_values
+                ? `<span style="color:var(--text-muted);">${JSON.stringify(l.new_values).substring(0,60)}...</span>`
+                : '—'}
+            </td>
+          </tr>`).join('');
+      } catch(e) { showToast("Failed to load audit log", "error"); }
+    }
+
+    loadAudit();
+  </script>
+</body>
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checklists — Matrix S2P</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon"><i class="fa-solid fa-network-wired"></i></div>
+      <div class="logo-text"><span class="logo-main">Matrix S2P</span><span class="logo-sub">Comsec Pvt. Ltd.</span></div>
+    </div>
+    <nav class="sidebar-nav">
+  <a href="../index.html"        class="nav-item"><i class="fa fa-chart-pie"></i><span>Dashboard</span></a>
+  <a href="vendors.html"         class="nav-item"><i class="fa fa-building"></i><span>Vendors</span></a>
+  <a href="rfq.html"             class="nav-item"><i class="fa fa-file-alt"></i><span>RFQ</span></a>
+  <a href="quotations.html"      class="nav-item"><i class="fa fa-balance-scale"></i><span>Quotations</span></a>
+  <a href="purchase_orders.html" class="nav-item"><i class="fa fa-shopping-cart"></i><span>Purchase Orders</span></a>
+  <a href="invoices.html"        class="nav-item"><i class="fa fa-file-invoice"></i><span>Invoices</span></a>
+  <a href="payments.html"        class="nav-item"><i class="fa fa-money-bill-wave"></i><span>Payments</span></a>
+  <a href="performance.html"     class="nav-item"><i class="fa fa-star"></i><span>Performance</span></a>
+  <a href="ai_discovery.html"    class="nav-item"><i class="fa fa-robot"></i><span>AI Discovery</span></a>
+  <a href="sap_integration.html" class="nav-item"><i class="fa fa-plug"></i><span>SAP Integration</span></a>
+  <a href="contracts.html"       class="nav-item"><i class="fa fa-file-contract"></i><span>Contracts</span></a>
+  <a href="negotiations.html"    class="nav-item"><i class="fa fa-handshake"></i><span>Negotiations</span></a>
+  <a href="checklists.html"      class="nav-item active"><i class="fa fa-tasks"></i><span>Checklists</span></a>
+  <a href="audit.html"           class="nav-item"><i class="fa fa-history"></i><span>Audit Trail</span></a>
+</nav>
+    <div class="sidebar-footer"><span><i class="fa fa-circle green-dot"></i> System Online</span></div>
+  </div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa fa-bars"></i></button>
+      <div class="topbar-title">
+        <h1>Procurement Checklists</h1>
+        <span>Dynamic checklists with quarterly review cycle (BR-S2P-12)</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openNewChecklistModal()">
+          <i class="fa fa-plus"></i> New Checklist
+        </button>
+      </div>
+    </header>
+
+    <div class="content-body">
+
+      <!-- Overdue Alert -->
+      <!-- FIX: Removed duplicate display:flex so display:none works correctly -->
+      <div id="overdue-alert" style="display:none;background:#fef2f2;border:1px solid #fca5a5;
+           border-radius:12px;padding:16px 20px;align-items:center;gap:12px;">
+        <i class="fa fa-exclamation-triangle" style="color:var(--red);font-size:20px;"></i>
+        <div>
+          <strong style="color:var(--red);">Review Overdue!</strong>
+          <span id="overdue-msg" style="font-size:14px;color:var(--text-muted);margin-left:8px;"></span>
+        </div>
+      </div>
+
+      <!-- Checklists Grid -->
+      <div id="checklist-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(480px,1fr));gap:20px;">
+        <div style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CREATE CHECKLIST MODAL -->
+  <div class="modal-overlay" id="cl-modal">
+    <div class="modal" style="max-width:600px;">
+      <div class="modal-header">
+        <h2><i class="fa fa-tasks"></i> New Checklist</h2>
+        <button class="modal-close" onclick="document.getElementById('cl-modal').classList.remove('open')">×</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Checklist Name *</label>
+          <input type="text" id="cl-name" placeholder="e.g. Q2 Electronic Components Checklist"/>
+        </div>
+        <div class="form-group">
+          <label>Category *</label>
+          <select id="cl-category">
+            <option value="Electronic">Electronic</option>
+            <option value="Mechanical">Mechanical</option>
+            <option value="General">General</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Review Cycle (months)</label>
+        <select id="cl-cycle">
+          <option value="1">Monthly</option>
+          <option value="3" selected>Quarterly (Recommended)</option>
+          <option value="6">Half-Yearly</option>
+          <option value="12">Annual</option>
+        </select>
+      </div>
+      <div style="margin:16px 0 8px;font-weight:700;font-size:14px;">
+        <i class="fa fa-list"></i> Checklist Items
+        <button type="button" class="btn btn-outline"
+                style="padding:4px 12px;font-size:12px;margin-left:12px;"
+                onclick="addChecklistItem()">+ Add Item</button>
+      </div>
+      <div id="cl-items-container"></div>
+      <div style="display:flex;gap:12px;margin-top:20px;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="document.getElementById('cl-modal').classList.remove('open')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitChecklist()"><i class="fa fa-save"></i> Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD ITEM MODAL -->
+  <div class="modal-overlay" id="add-item-modal">
+    <div class="modal" style="max-width:440px;">
+      <div class="modal-header">
+        <h2><i class="fa fa-plus"></i> Add Checklist Item</h2>
+        <button class="modal-close" onclick="document.getElementById('add-item-modal').classList.remove('open')">×</button>
+      </div>
+      <input type="hidden" id="add-item-cl-id"/>
+      <div class="form-group">
+        <label>Item Text *</label>
+        <textarea id="add-item-text" rows="3" placeholder="e.g. Verify OEM approval certificate is not expired"></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+        <input type="checkbox" id="add-item-mandatory" checked style="width:16px;height:16px;"/>
+        <label for="add-item-mandatory" style="font-size:14px;font-weight:600;">Mandatory Item</label>
+      </div>
+      <div style="display:flex;gap:12px;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="document.getElementById('add-item-modal').classList.remove('open')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitAddItem()"><i class="fa fa-plus"></i> Add</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    let clItemCount = 0;
+
+    // FIX: Added formatDate() since it was used but never defined
+    function formatDate(dateStr) {
+      if (!dateStr) return "—";
+      const d = new Date(dateStr);
+      if (isNaN(d)) return dateStr;
+      return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    }
+
+    // FIX: Reset modal state (counter, fields, items) each time it opens
+    function openNewChecklistModal() {
+      clItemCount = 0;
+      document.getElementById("cl-name").value = "";
+      document.getElementById("cl-category").selectedIndex = 0;
+      document.getElementById("cl-cycle").value = "3";
+      document.getElementById("cl-items-container").innerHTML = "";
+      addChecklistItem();
+      document.getElementById("cl-modal").classList.add("open");
+    }
+
+    function addChecklistItem() {
+      clItemCount++;
+      const div = document.createElement("div");
+      div.id    = `cl-item-${clItemCount}`;
+      div.style.cssText = "display:flex;gap:8px;margin-bottom:8px;align-items:center;";
+      div.innerHTML = `
+        <input type="text" class="cl-item-text" placeholder="Checklist item ${clItemCount}..."
+               style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:14px;"/>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap;">
+          <input type="checkbox" class="cl-item-mandatory" checked/> Mandatory
+        </label>
+        <button onclick="document.getElementById('cl-item-${clItemCount}').remove()"
+                style="padding:6px 10px;background:var(--red);color:white;border:none;border-radius:8px;cursor:pointer;">✕</button>`;
+      document.getElementById("cl-items-container").appendChild(div);
+    }
+
+    async function loadChecklists() {
+      try {
+        const data = await api.get("/checklists/");
+
+        // FIX: Separated overdue fetch into its own try/catch so a failure
+        //      here does not prevent the checklist grid from rendering
+        try {
+          const overdueData = await api.get("/checklists/overdue");
+          const alert = document.getElementById("overdue-alert");
+          if (overdueData.overdue_count > 0) {
+            document.getElementById("overdue-msg").textContent =
+              `${overdueData.overdue_count} checklist(s) are overdue for review!`;
+            alert.style.display = "flex";
+          } else {
+            // FIX: Hide the alert when nothing is overdue (was never hidden before)
+            alert.style.display = "none";
+          }
+        } catch(overdueErr) {
+          console.warn("Could not fetch overdue status:", overdueErr.message);
+        }
+
+        const grid = document.getElementById("checklist-grid");
+        if (!data.checklists.length) {
+          grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+            <i class="fa fa-tasks"></i><p>No checklists yet. Create your first one!</p></div>`;
+          return;
+        }
+
+        grid.innerHTML = data.checklists.map(cl => `
+          <div class="card" style="${cl.review_overdue ? 'border:2px solid var(--orange);' : ''}">
+            <div class="card-header" style="justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <!-- FIX: Fixed broken template literal — inner ternary was a plain string, not an expression -->
+                <span style="background:${cl.category === 'Electronic' ? '#dbeafe' : cl.category === 'Mechanical' ? '#fef9c3' : '#f0fdf4'};
+                      padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;">
+                  ${cl.category}
+                </span>
+                ${cl.review_overdue
+                  ? '<span style="background:#fef2f2;color:var(--red);padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;">⚠️ REVIEW OVERDUE</span>'
+                  : ''}
+              </div>
+              <span style="font-size:12px;color:var(--text-muted);">v${cl.version}</span>
+            </div>
+            <div style="padding:16px 20px;">
+              <div style="font-size:16px;font-weight:700;margin-bottom:8px;">${cl.name}</div>
+              <div style="display:flex;gap:16px;font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+                <span><i class="fa fa-list"></i> ${cl.total_items} items
+                  (${cl.mandatory} mandatory)</span>
+                <span><i class="fa fa-calendar"></i>
+                  Next review: <strong style="color:${cl.review_overdue?'var(--red)':'var(--text-dark)'}">
+                  ${formatDate(cl.next_review)}</strong></span>
+              </div>
+
+              <!-- Items -->
+              <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:12px;max-height:200px;overflow-y:auto;">
+                ${cl.items.map((item,i) => `
+                  <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;">
+                    <span style="width:20px;height:20px;border-radius:50%;
+                          background:${item.mandatory?'var(--primary)':'var(--text-muted)'};
+                          color:white;font-size:11px;display:flex;align-items:center;
+                          justify-content:center;flex-shrink:0;margin-top:1px;">
+                      ${i+1}
+                    </span>
+                    <div style="flex:1;font-size:13px;">
+                      ${item.text}
+                      ${item.mandatory ? '<span style="color:var(--red);font-size:10px;margin-left:4px;">*</span>' : ''}
+                    </div>
+                    <button onclick="deleteItem(${cl.id},${item.id})"
+                            style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;"
+                            title="Remove item">✕</button>
+                  </div>`).join('')}
+              </div>
+
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-outline" style="padding:6px 12px;font-size:13px;"
+                        onclick="openAddItem(${cl.id})">
+                  <i class="fa fa-plus"></i> Add Item
+                </button>
+                <button class="btn btn-success" style="padding:6px 12px;font-size:13px;"
+                        onclick="markReviewed(${cl.id},'${cl.name}',${cl.review_months})">
+                  <i class="fa fa-check"></i> Mark Reviewed
+                </button>
+                ${cl.review_overdue
+                  ? `<span style="font-size:12px;color:var(--red);align-self:center;">
+                       ⚠️ Overdue! Please review now.
+                     </span>` : ''}
+              </div>
+            </div>
+          </div>`).join('');
+      } catch(e) { showToast("Failed to load checklists: " + e.message, "error"); }
+    }
+
+    async function submitChecklist() {
+      const name     = document.getElementById("cl-name").value.trim();
+      const category = document.getElementById("cl-category").value;
+      const cycle    = parseInt(document.getElementById("cl-cycle").value);
+      if (!name) { showToast("Checklist name required", "error"); return; }
+
+      const items = [];
+      document.querySelectorAll("#cl-items-container > div").forEach((row, i) => {
+        const text = row.querySelector(".cl-item-text")?.value.trim();
+        const mand = row.querySelector(".cl-item-mandatory")?.checked;
+        if (text) items.push({ item_text: text, is_mandatory: mand, sort_order: i });
+      });
+
+      try {
+        await api.post("/checklists/", {
+          name: name, category: category,
+          review_months: cycle, items: items
+        });
+        showToast("✅ Checklist created!", "success");
+        document.getElementById("cl-modal").classList.remove("open");
+        loadChecklists();
+      } catch(e) { showToast("Error: " + e.message, "error"); }
+    }
+
+    function openAddItem(clId) {
+      document.getElementById("add-item-cl-id").value = clId;
+      document.getElementById("add-item-text").value  = "";
+      document.getElementById("add-item-modal").classList.add("open");
+    }
+
+    async function submitAddItem() {
+      const clId = document.getElementById("add-item-cl-id").value;
+      const text = document.getElementById("add-item-text").value.trim();
+      const mand = document.getElementById("add-item-mandatory").checked;
+      if (!text) { showToast("Item text required", "error"); return; }
+      try {
+        await api.post(`/checklists/${clId}/items`,
+          { item_text: text, is_mandatory: mand, sort_order: 99 });
+        showToast("✅ Item added!", "success");
+        document.getElementById("add-item-modal").classList.remove("open");
+        loadChecklists();
+      } catch(e) { showToast(e.message, "error"); }
+    }
+
+    async function deleteItem(clId, itemId) {
+      if (!confirm("Remove this item?")) return;
+      try {
+        await api.delete(`/checklists/${clId}/items/${itemId}`);
+        showToast("Item removed", "info");
+        loadChecklists();
+      } catch(e) { showToast(e.message, "error"); }
+    }
+
+    // FIX: Now accepts reviewMonths from the checklist object instead of hardcoding 3
+    async function markReviewed(id, name, reviewMonths) {
+      if (!confirm(`Mark "${name}" as reviewed? This resets the review cycle.`)) return;
+      try {
+        const res = await api.post(`/checklists/${id}/review?review_months=${reviewMonths}`);
+        showToast(`✅ Reviewed! ${res.message}`, "success");
+        loadChecklists();
+      } catch(e) { showToast(e.message, "error"); }
+    }
+
+    // FIX: Wrapped in DOMContentLoaded so DOM is guaranteed ready,
+    //      and modal open now handles the initial item addition
+    document.addEventListener("DOMContentLoaded", function () {
+      loadChecklists();
+    });
+  </script>
+</body>
+</html>
