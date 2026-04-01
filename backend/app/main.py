@@ -1,4 +1,5 @@
-# main.py — FastAPI application entry point — COMPLETE VERSION
+# main.py — FastAPI application entry point — COMPLETE VERSION v2.1
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import test_connection, engine, Base
@@ -10,17 +11,28 @@ from app.routers import (
     negotiations, checklists, audit
 )
 
-# Auto-create any new tables (negotiations, contracts if not exist)
-Base.metadata.create_all(bind=engine)
+# ── Lifespan (replaces deprecated @app.on_event) ─────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    Base.metadata.create_all(bind=engine)
+    test_connection()
+    print("✅ S2P System v2.0 started — All BRD modules active")
+    yield
+    # Shutdown (optional cleanup)
+    print("S2P System shutting down...")
 
+# ── App Instance ──────────────────────────────────────────────
 app = FastAPI(
-    title      = "S2P Automation System — Matrix Comsec",
-    description= "AI-powered Source-to-Pay platform | All BRD requirements implemented",
-    version    = "2.0.0",
-    docs_url   = "/docs",
-    redoc_url  = "/redoc"
+    title       = "S2P Automation System — Matrix Comsec",
+    description = "AI-powered Source-to-Pay platform | All BRD requirements implemented",
+    version     = "2.0.0",
+    docs_url    = "/docs",
+    redoc_url   = "/redoc",
+    lifespan    = lifespan
 )
 
+# ── CORS ──────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins     = ["*"],
@@ -30,29 +42,26 @@ app.add_middleware(
 )
 
 # ── Register ALL routers ──────────────────────────────────────
-app.include_router(vendors.router,       prefix="/api/vendors",       tags=["Vendors"])
-app.include_router(rfq.router,           prefix="/api/rfq",           tags=["RFQ"])
-app.include_router(quotations.router,    prefix="/api/quotations",    tags=["Quotations"])
-app.include_router(purchase_orders.router,prefix="/api/purchase-orders",tags=["Purchase Orders"])
-app.include_router(invoices.router,      prefix="/api/invoices",      tags=["Invoices"])
-app.include_router(dashboard.router,     prefix="/api/dashboard",     tags=["Dashboard"])
-app.include_router(sap.router,           prefix="/api/sap",           tags=["SAP Integration"])
-app.include_router(contracts.router,     prefix="/api/contracts",     tags=["Contracts"])
-app.include_router(negotiations.router,  prefix="/api/negotiations",  tags=["Negotiations"])
-app.include_router(checklists.router,    prefix="/api/checklists",    tags=["Checklists"])
-app.include_router(audit.router,         prefix="/api/audit",         tags=["Audit Trail"])
+app.include_router(vendors.router,          prefix="/api/vendors",         tags=["Vendors"])
+app.include_router(rfq.router,              prefix="/api/rfq",             tags=["RFQ"])
+app.include_router(quotations.router,       prefix="/api/quotations",      tags=["Quotations"])
+app.include_router(purchase_orders.router,  prefix="/api/purchase-orders", tags=["Purchase Orders"])
+app.include_router(invoices.router,         prefix="/api/invoices",        tags=["Invoices"])
+app.include_router(dashboard.router,        prefix="/api/dashboard",       tags=["Dashboard"])
+app.include_router(sap.router,              prefix="/api/sap",             tags=["SAP Integration"])
+app.include_router(contracts.router,        prefix="/api/contracts",       tags=["Contracts"])
+app.include_router(negotiations.router,     prefix="/api/negotiations",    tags=["Negotiations"])
+app.include_router(checklists.router,       prefix="/api/checklists",      tags=["Checklists"])
+app.include_router(audit.router,            prefix="/api/audit",           tags=["Audit Trail"])
 
-@app.on_event("startup")
-async def startup_event():
-    test_connection()
-    print("✅ S2P System v2.0 started — All BRD modules active")
-
+# ── Root Endpoints ────────────────────────────────────────────
 @app.get("/")
 def root():
     return {
         "system" : "S2P Automation — Matrix Comsec Pvt. Ltd.",
         "version": "2.0.0",
         "status" : "running",
+        "docs"   : "/docs",
         "brd_coverage": {
             "BR-S2P-01": "✅ AI Vendor Discovery",
             "BR-S2P-02": "✅ Vendor Master Database",

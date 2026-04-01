@@ -1,28 +1,28 @@
 # Web Framework
-fastapi==0.111.0
-uvicorn==0.29.0
+fastapi==0.104.1
+uvicorn==0.24.0
 
 # Database
-sqlalchemy==2.0.30
+sqlalchemy==2.0.23
 pymysql==1.1.0
-cryptography==42.0.5
+cryptography==41.0.7
 
 # Data Validation
-pydantic==2.7.1
-pydantic-settings==2.2.1
+pydantic==2.5.0
+pydantic-settings==2.1.0
 
 # Environment Variables
-python-dotenv==1.0.1
+python-dotenv==1.0.0
 
 # Date/Time utilities
-python-dateutil==2.9.0
+python-dateutil==2.8.2
 
 # Templates
-jinja2==3.1.4
+jinja2==3.1.2
 
 # HTTP requests
-httpx==0.27.0
+httpx==0.25.2
 
 # File handling
-python-multipart==0.0.9
+python-multipart==0.0.6
 openpyxl==3.1.2
