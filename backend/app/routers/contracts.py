@@ -43,8 +43,8 @@ class ContractCreate(BaseModel):
 
 def generate_contract_number(db: Session) -> str:
     year  = datetime.now().year
-    count = db.query(func.count(Contract.id)).scalar()
-    return f"CON-{year}-{str(count+1).zfill(4)}"
+    max_id = db.query(func.max(Contract.id)).scalar() or 0
+    return f"CON-{year}-{str(max_id + 1).zfill(4)}"
 
 def update_contract_status(contract: Contract) -> str:
     today = date.today()

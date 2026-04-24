@@ -5,12 +5,24 @@ from app.database import get_db
 from app.models.vendor import Vendor
 from app.models.purchase_order import PurchaseOrder, POItem
 from app.models.invoice import Invoice, GRN
-from app.utils.sap_mock import (
-    sync_vendor_to_sap, sync_po_to_sap,
-    sync_grn_to_sap, sync_invoice_to_sap,
-    get_sap_po_status, get_sap_vendor_details,
-    health_check
-)
+from app.config import settings
+
+# ── Dynamic SAP Backend Router ──
+if settings.SAP_INTEGRATION_MODE.lower() == "real":
+    from app.utils.sap_client import (
+        sync_vendor_to_sap, sync_po_to_sap,
+        sync_grn_to_sap, sync_invoice_to_sap,
+        get_sap_po_status, get_sap_vendor_details,
+    )
+    def health_check():
+        return {"sap_system": "S4H", "environment": "Production/Real (via REST OData)", "status": "Ready"}
+else:
+    from app.utils.sap_mock import (
+        sync_vendor_to_sap, sync_po_to_sap,
+        sync_grn_to_sap, sync_invoice_to_sap,
+        get_sap_po_status, get_sap_vendor_details,
+        health_check
+    )
 
 router = APIRouter()
 

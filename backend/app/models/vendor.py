@@ -64,3 +64,8 @@ class VendorDocument(Base):
     uploaded_at = Column(DateTime, default=datetime.utcnow)
 
     vendor      = relationship("Vendor", back_populates="documents")
+
+# Ensure relationships to these models resolve correctly
+from app.models.quotation import Quotation, QuotationItem
+from app.models.purchase_order import PurchaseOrder, POItem
+from app.models.payment import VendorPerformance

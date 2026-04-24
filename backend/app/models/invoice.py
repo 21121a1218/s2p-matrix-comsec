@@ -48,6 +48,21 @@ class Invoice(Base):
     vendor           = relationship("Vendor")
     po               = relationship("PurchaseOrder", back_populates="invoices")
     payments         = relationship("Payment", back_populates="invoice")
+    items            = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete")
+
+
+class InvoiceItem(Base):
+    __tablename__ = "invoice_items"
+
+    id            = Column(Integer, primary_key=True, index=True)
+    invoice_id    = Column(Integer, ForeignKey("invoices.id", ondelete="CASCADE"))
+    po_item_id    = Column(Integer, ForeignKey("po_items.id"))
+    description   = Column(String(500))
+    billed_qty    = Column(DECIMAL(10, 2), nullable=False)
+    unit_price    = Column(DECIMAL(15, 2), nullable=False)
+    total_price   = Column(DECIMAL(15, 2), nullable=False)
+
+    invoice       = relationship("Invoice", back_populates="items")
 
 
 class GRN(Base):
@@ -61,7 +76,7 @@ class GRN(Base):
     received_by     = Column(String(100))
 
     quality_status  = Column(
-                        Enum("Accepted", "Partially Accepted", "Rejected"),
+                        Enum("Accepted", "Partially Accepted", "Rejected", "GRN Payment Run: Failed"),
                         default="Accepted"
                       )
     rejection_reason = Column(Text)

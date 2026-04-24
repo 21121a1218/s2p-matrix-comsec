@@ -1,4 +1,3 @@
-# models/rfq.py
 from sqlalchemy import Column, Integer, String, Text, Date, DateTime
 from sqlalchemy import DECIMAL, Enum, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
@@ -13,6 +12,7 @@ class RFQ(Base):
     title           = Column(String(255), nullable=False)
     description     = Column(Text)
     category_id     = Column(Integer, ForeignKey("commodity_categories.id"))
+    target_category = Column(String(50)) # Added to store discovery category
 
     issue_date      = Column(Date, nullable=False)
     deadline        = Column(Date, nullable=False)
@@ -22,6 +22,7 @@ class RFQ(Base):
                              "Evaluation", "Closed", "Cancelled"),
                         default="Draft"
                       )
+    current_stage   = Column(Integer, default=0)   # 0=new, 1-8=last completed stage
     estimated_value = Column(DECIMAL(15, 2))
     currency        = Column(String(5), default="INR")
 
@@ -59,6 +60,14 @@ class RFQVendor(Base):
     response_status = Column(
                         Enum("Pending", "Responded", "Declined", "No Response"),
                         default="Pending"
+                      )
+    # Vendor portal token (used for secure quotation submission link)
+    invite_token    = Column(String(100), unique=True, nullable=True, index=True)
+    token_expires   = Column(DateTime, nullable=True)
+    token_used      = Column(Boolean, default=False)   # True after first submission
+    email_status    = Column(
+                        Enum("Not Sent", "Simulated", "Sent", "Failed"),
+                        default="Not Sent"
                       )
 
     rfq             = relationship("RFQ", back_populates="vendors")

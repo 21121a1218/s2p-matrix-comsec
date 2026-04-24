@@ -16,7 +16,7 @@ class Payment(Base):
     amount        = Column(DECIMAL(15, 2), nullable=False)
     currency      = Column(String(5), default="INR")
     payment_mode  = Column(
-                     Enum("NEFT", "RTGS", "IMPS", "Cheque", "UPI"),
+                     Enum("NEFT", "RTGS", "IMPS", "Cheque", "UPI", "Auto-Transfer"),
                      default="NEFT"
                    )
 

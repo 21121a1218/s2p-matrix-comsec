@@ -1,5 +1,6 @@
-# routers/vendors.py
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+import csv
+import io
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
@@ -47,8 +48,9 @@ class VendorUpdate(BaseModel):
 
 # ── Helper: Auto-generate vendor code ────────────────────────
 def generate_vendor_code(db: Session) -> str:
-    count = db.query(func.count(Vendor.id)).scalar()
-    return f"VEN-{str(count + 1).zfill(4)}"
+    # Use max(id) to avoid duplicates if rows were deleted
+    max_id = db.query(func.max(Vendor.id)).scalar() or 0
+    return f"VEN-{str(max_id + 1).zfill(4)}"
 
 # ── ROUTES ────────────────────────────────────────────────────
 
@@ -106,6 +108,101 @@ def create_vendor(data: VendorCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(vendor)
     return {"message": "Vendor created successfully", "vendor": vendor}
+
+# POST migrate from Google Sheets (CSV)
+@router.post("/migrate")
+async def migrate_vendors(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Only CSV files are allowed")
+    
+    content = await file.read()
+    stream = io.StringIO(content.decode('utf-8', errors='ignore'))
+    reader = csv.DictReader(stream)
+    
+    # Pre-mapping for common Enum variations to prevent 500 errors
+    CAT_MAP = {"electronic": "Electronic", "electronics": "Electronic", "mechanical": "Mechanical", "both": "Both"}
+    TYPE_MAP = {"oem": "OEM", "distributor": "Distributor", "trader": "Trader", "service": "Service"}
+
+    imported_count = 0
+    skipped_count = 0
+    last_error = None
+    
+    def to_bool(val):
+        if not val: return False
+        v = str(val).lower().strip()
+        return v in ['yes', 'true', '1', 'y']
+
+    # Get starting index for vendor codes to avoid duplicates in the same batch
+    max_id = db.query(func.max(Vendor.id)).scalar() or 0
+    current_idx = max_id + 1
+
+    for row in reader:
+        try:
+            # 1. Identity Check
+            email = (row.get('Email') or row.get('email') or "").strip().lower()
+            if not email:
+                skipped_count += 1
+                continue
+                
+            # 2. Duplicate Check
+            existing = db.query(Vendor).filter(Vendor.email == email).first()
+            if existing:
+                skipped_count += 1
+                continue
+                
+            company = row.get('Company Name') or row.get('company_name') or "Unknown Company"
+            
+            # 3. Enum Normalization (Critical for SQL stability)
+            raw_cat = (row.get('Category') or "Electronic").strip().lower()
+            category = CAT_MAP.get(raw_cat, "Electronic")
+            
+            raw_type = (row.get('Vendor Type') or "Distributor").strip().lower()
+            vendor_type = TYPE_MAP.get(raw_type, "Distributor")
+
+            # 4. Create Vendor Object
+            v_code = f"VEN-{str(current_idx).zfill(4)}"
+            vendor = Vendor(
+                vendor_code       = v_code,
+                company_name      = company.strip(),
+                contact_person    = row.get('Contact Person') or row.get('contact'),
+                email             = email,
+                phone             = row.get('Phone') or row.get('mobile'),
+                address           = row.get('Address'),
+                city              = row.get('City'),
+                state             = row.get('State'),
+                pincode           = row.get('Pincode'),
+                country           = row.get('Country') or "India",
+                category          = category,
+                vendor_type       = vendor_type,
+                oem_approved      = to_bool(row.get('OEM Approved')),
+                oem_brand         = row.get('OEM Brand'),
+                gst_number        = row.get('GST') or row.get('gst_number'),
+                pan_number        = row.get('PAN'),
+                msme_registered   = to_bool(row.get('MSME Registered')),
+                status            = "Under Review",
+                created_by        = "google-sheets-migration"
+            )
+            db.add(vendor)
+            db.flush() 
+            current_idx += 1
+            # 5. Trigger AI Scoring (Day-Zero)
+            try:
+                score_vendor(vendor.id, db)
+            except Exception as se:
+                print(f"Scoring failed for {vendor.id}: {se}")
+
+            imported_count += 1
+        except Exception as e:
+            db.rollback()
+            last_error = str(e)
+            skipped_count += 1
+            print(f"Migration error for row {email}: {e}")
+        
+    db.commit()
+    if imported_count == 0 and skipped_count > 0 and last_error:
+        raise HTTPException(status_code=400, detail=f"Migration failed. Example error: {last_error}")
+
+    return {"status": "success", "count": imported_count, "skipped": skipped_count}
 
 # PATCH update vendor
 @router.patch("/{vendor_id}")

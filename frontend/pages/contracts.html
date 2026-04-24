@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Contracts — Matrix S2P</title>
+  <title>Contracts ΓÇö Matrix S2P</title>
   <link rel="stylesheet" href="../css/style.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
@@ -52,19 +52,19 @@
       <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">
         <div class="kpi-card blue">
           <div class="kpi-icon"><i class="fa fa-file-contract"></i></div>
-          <div class="kpi-data"><span class="kpi-value" id="kpi-total">—</span><span class="kpi-label">Total Contracts</span></div>
+          <div class="kpi-data"><span class="kpi-value" id="kpi-total">ΓÇö</span><span class="kpi-label">Total Contracts</span></div>
         </div>
         <div class="kpi-card green">
           <div class="kpi-icon"><i class="fa fa-check-circle"></i></div>
-          <div class="kpi-data"><span class="kpi-value" id="kpi-active">—</span><span class="kpi-label">Active</span></div>
+          <div class="kpi-data"><span class="kpi-value" id="kpi-active">ΓÇö</span><span class="kpi-label">Active</span></div>
         </div>
         <div class="kpi-card orange">
           <div class="kpi-icon"><i class="fa fa-exclamation-triangle"></i></div>
-          <div class="kpi-data"><span class="kpi-value" id="kpi-expiring">—</span><span class="kpi-label">Expiring Soon</span></div>
+          <div class="kpi-data"><span class="kpi-value" id="kpi-expiring">ΓÇö</span><span class="kpi-label">Expiring Soon</span></div>
         </div>
         <div class="kpi-card red">
           <div class="kpi-icon"><i class="fa fa-times-circle"></i></div>
-          <div class="kpi-data"><span class="kpi-value" id="kpi-expired">—</span><span class="kpi-label">Expired</span></div>
+          <div class="kpi-data"><span class="kpi-value" id="kpi-expired">ΓÇö</span><span class="kpi-label">Expired</span></div>
         </div>
       </div>
 
@@ -124,11 +124,11 @@
     <div class="modal" style="max-width:620px;">
       <div class="modal-header">
         <h2><i class="fa fa-file-contract"></i> New Contract</h2>
-        <button class="modal-close" onclick="document.getElementById('contract-modal').classList.remove('open')">×</button>
+        <button class="modal-close" onclick="document.getElementById('contract-modal').classList.remove('open')">├ù</button>
       </div>
       <div class="form-group">
         <label>Contract Title *</label>
-        <input type="text" id="c-title" placeholder="e.g. Annual Supply Agreement — CCTV Components"/>
+        <input type="text" id="c-title" placeholder="e.g. Annual Supply Agreement ΓÇö CCTV Components"/>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -200,7 +200,7 @@
             <div style="display:flex;justify-content:space-between;align-items:center;
                         padding:10px 0;border-bottom:1px solid var(--border);">
               <div>
-                <strong>${a.contract_number}</strong> — ${a.vendor_name}<br/>
+                <strong>${a.contract_number}</strong> ΓÇö ${a.vendor_name}<br/>
                 <span style="font-size:13px;color:var(--text-muted);">${a.title}</span>
               </div>
               <div style="text-align:right;">
@@ -247,14 +247,14 @@
                   : `${c.days_remaining}d`}
               </span>
             </td>
-            <td>${c.contract_value ? formatINR(c.contract_value) : '—'}</td>
+            <td>${c.contract_value ? formatINR(c.contract_value) : 'ΓÇö'}</td>
             <td>${badge(c.status)}</td>
             <td>
               ${c.status !== 'Terminated' && c.status !== 'Expired'
                 ? `<button class="btn btn-danger" style="padding:4px 10px;font-size:12px;"
                      onclick="terminateContract(${c.id},'${c.contract_number}')">
                      <i class="fa fa-times"></i> Terminate
-                   </button>` : '—'}
+                   </button>` : 'ΓÇö'}
             </td>
           </tr>`).join('');
       } catch(e) { showToast("Failed to load contracts: " + e.message, "error"); }
@@ -265,7 +265,7 @@
         const data = await api.get("/vendors/");
         const sel  = document.getElementById("c-vendor");
         data.vendors.forEach(v =>
-          sel.appendChild(new Option(`${v.vendor_code} — ${v.company_name}`, v.id)));
+          sel.appendChild(new Option(`${v.vendor_code} ΓÇö ${v.company_name}`, v.id)));
       } catch(e) {}
     }
 
@@ -288,7 +288,7 @@
           renewal_alert_days : parseInt(document.getElementById("c-alert").value) || 30,
           notes              : document.getElementById("c-notes").value
         });
-        showToast(`✅ ${res.contract_number} created!`, "success");
+        showToast(`Γ£à ${res.contract_number} created!`, "success");
         document.getElementById("contract-modal").classList.remove("open");
         loadContracts();
       } catch(e) { showToast("Error: " + e.message, "error"); }

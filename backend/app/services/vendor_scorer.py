@@ -148,6 +148,26 @@ def score_vendor(vendor_id: int, db: Session,
     pricing_score                         = calculate_pricing_score(vendor_id, db, all_vendor_ids)
     response_score, rfqs_recv, rfqs_resp  = calculate_response_score(vendor_id, db)
 
+    # ── Day-Zero Profile Intelligence ───────────────────────────
+    # If a vendor is new (no orders/history), we calculate a Profile Confidence Score
+    # instead of just serving a neutral 50.
+    is_new = (total_orders == 0 and rfqs_recv == 0)
+    
+    if is_new:
+        vendor = db.query(Vendor).filter(Vendor.id == vendor_id).first()
+        profile_score = 40.0 # base score
+        if vendor:
+            if vendor.oem_approved:    profile_score += 20.0 # Trust boost
+            if vendor.gst_number:      profile_score += 10.0 # Compliance boost
+            if vendor.pan_number:      profile_score += 10.0 # Documentation boost
+            if vendor.msme_registered: profile_score += 10.0 # Governance boost
+        
+        # Override KPIs for the initial rank
+        delivery_score = profile_score
+        quality_score  = profile_score
+        pricing_score  = profile_score
+        response_score = profile_score
+
     # Weighted overall score
     overall = round(
         (delivery_score * WEIGHTS["delivery"] / 100) +
@@ -159,9 +179,9 @@ def score_vendor(vendor_id: int, db: Session,
 
     # Grade
     if overall >= 85:   grade = "A+ (Excellent)"
-    elif overall >= 70: grade = "A  (Good)"
-    elif overall >= 55: grade = "B  (Average)"
-    elif overall >= 40: grade = "C  (Below Average)"
+    elif overall >= 75: grade = "A  (Good)"
+    elif overall >= 60: grade = "B  (Average)"
+    elif overall >= 45: grade = "C  (Below Average)"
     else:               grade = "D  (Poor — Review Required)"
 
     # Upsert into vendor_performance table

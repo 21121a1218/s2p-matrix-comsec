@@ -23,6 +23,8 @@ class PurchaseOrder(Base):
     currency         = Column(String(5), default="INR")
 
     payment_terms    = Column(String(100))
+    incoterms        = Column(String(100), default="DAP — Gandhinagar")
+    department       = Column(String(50), default="Procurement")
     delivery_address = Column(Text)
 
     status           = Column(

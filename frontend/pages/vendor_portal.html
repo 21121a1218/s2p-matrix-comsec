@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vendor Quotation Portal — Matrix Comsec</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary   : #0f766e;
+      --primary-dk: #115e59;
+      --primary-lt: #14b8a6;
+      --accent    : #ccfbf1;
+      --blue      : #1a56db;
+      --green     : #16a34a;
+      --red       : #dc2626;
+      --amber     : #d97706;
+      --bg        : #f8fafc;
+      --surface   : #ffffff;
+      --border    : #e2e8f0;
+      --text      : #0f172a;
+      --muted     : #64748b;
+      --radius    : 16px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #e0e7ff 0%, #f8fafc 40%, #e0f2fe 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      color: var(--text);
+    }
+
+    /* ── Hide Number Spinners to prevent accidental decimals ── */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    /* ── Layout ── */
+    .portal-wrap {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .portal-header {
+      background: var(--primary-dk);
+      box-shadow: 0 12px 32px rgba(15, 118, 110, 0.2);
+      border-radius: var(--radius);
+      padding: 24px 32px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .portal-logo {
+      width: 56px; height: 56px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; color: #fff;
+      box-shadow: inset 0 2px 8px rgba(255,255,255,0.2);
+    }
+    .portal-header-text h1 {
+      font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.3px;
+    }
+    .portal-header-text p { font-size: 14px; color: var(--accent); margin-top: 4px; font-weight: 500;}
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,0.5);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+    .card-title {
+      font-size: 16px; font-weight: 800; color: var(--text);
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+      border-bottom: 2px solid var(--bg);
+      padding-bottom: 12px;
+    }
+    .card-title i { color: var(--primary); }
+
+    /* ── RFQ Info Box ── */
+    .rfq-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 480px) { .rfq-info-grid { grid-template-columns: 1fr; } }
+    .rfq-info-item { background: #f1f5f9; border-radius: 12px; padding: 14px 18px; border: 1px solid var(--border); }
+    .rfq-info-item label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing:0.5px; }
+    .rfq-info-item span  { display: block; font-size: 15px; font-weight: 800; color: var(--primary-dk); margin-top: 4px; }
+    .rfq-info-item span.deadline { color: var(--red); display: flex; align-items: center; gap: 6px; }
+
+    /* ── Items Table ── */
+    .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+    .items-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .items-table th {
+      background: #f8fafc; padding: 12px 16px;
+      text-align: left; font-weight: 800;
+      font-size: 11px; text-transform: uppercase; color: var(--muted);
+      border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+    }
+    .items-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .items-table tr:hover { background: #f8fafc; }
+    .items-table tr:last-child td { border-bottom: none; }
+
+    /* ── Quote Form ── */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-group label { font-size: 13px; font-weight: 700; color: var(--text); }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text);
+      transition: all 0.2s;
+      background: #f8fafc;
+    }
+    .form-group input:hover,
+    .form-group select:hover,
+    .form-group textarea:hover { background: #fff; border-color: #cbd5e1; }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      background: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px var(--accent);
+    }
+
+    /* ── Item pricing rows ── */
+    .item-price-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 2fr) 140px 100px 140px;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 12px;
+      padding: 16px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .item-price-row:hover { border-color: #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+    @media (max-width: 650px) { .item-price-row { grid-template-columns: 1fr 1fr; } }
+    .item-price-row .item-label { font-size: 14px; font-weight: 700; color: var(--primary-dk); margin-bottom: 4px; }
+    .item-price-row .item-qty   { font-size: 12px; font-weight: 600; color: var(--muted); background: #e2e8f0; display: inline-block; padding: 2px 8px; border-radius: 4px; }
+    .item-price-row input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .item-price-row input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--accent); }
+    .item-price-row .total-cell { font-size: 15px; font-weight: 800; color: var(--primary); padding-bottom: 10px;}
+
+    /* ── Summary ── */
+    .quote-summary {
+      background: linear-gradient(135deg, #0f766e, #115e59);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 30px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 10px 24px rgba(15, 118, 110, 0.25);
+    }
+    .quote-summary .label { font-size: 14px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
+    .quote-summary .value { font-size: 28px; font-weight: 800; color: #fff; }
+
+    /* ── Buttons ── */
+    .btn-submit {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, var(--blue), #2563eb);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(37, 99, 235, 0.4); }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ── States ── */
+    .state-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+      padding: 60px 32px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .state-icon { font-size: 64px; margin-bottom: 24px; animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+    .state-title { font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 12px; }
+    .state-sub   { font-size: 15px; color: var(--muted); max-width: 480px; margin: 0 auto; line-height: 1.6; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 700;
+      border: 1px solid currentColor;
+    }
+    .badge-oem  { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+    .badge-warn { background: #fefce8; color: #a16207; border-color: #fde047; }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 20px; height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Already submitted banner ── */
+    .already-banner {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex; align-items: center; gap: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.1);
+    }
+    .already-banner i { font-size: 28px; color: var(--green); }
+    .already-banner p { font-size: 15px; color: #166534; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<div class="portal-wrap">
+  <!-- Header -->
+  <div class="portal-header">
+    <div class="portal-logo"><i class="fa fa-file-alt"></i></div>
+    <div class="portal-header-text">
+      <h1>HG INFO TECH — Vendor Quotation Portal</h1>
+      <p>Matrix Comsec Pvt. Ltd. · Secure Procurement Platform</p>
+    </div>
+  </div>
+
+  <!-- Dynamic content injected here -->
+  <div id="portal-content">
+    <div class="state-card">
+      <div class="state-icon">⏳</div>
+      <div class="state-title">Loading your invitation...</div>
+      <div class="state-sub">Validating your secure link. Please wait.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = 'http://127.0.0.1:8000/api';
+
+  // ── Token from URL ─────────────────────────────────────────
+  const params = new URLSearchParams(window.location.search);
+  const TOKEN  = params.get('token');
+
+  // ── State ──────────────────────────────────────────────────
+  let rfqData    = null;
+  let vendorData = null;
+  let rfqItems   = [];
+
+  // ── Init ───────────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', init);
+
+  async function init() {
+    if (!TOKEN) {
+      showError('No invitation token found.',
+        'Please check the link in your email and try again.');
+      return;
+    }
+    try {
+      const res = await fetch(`${API}/rfq/vendor-portal/${TOKEN}`);
+      const data = await res.json();
+      if (!res.ok) {
+        showError(data.detail || 'Invalid link.',
+          res.status === 410
+            ? 'The submission deadline has passed for this RFQ.'
+            : 'Contact Matrix Comsec procurement team for assistance.');
+        return;
+      }
+      rfqData    = data.rfq;
+      vendorData = data.vendor;
+      rfqItems   = data.rfq.items;
+
+      if (data.already_submitted) {
+        showAlreadySubmitted();
+      } else {
+        renderPortal();
+      }
+    } catch(e) {
+      showError('Could not connect to the server.',
+        'Please check your internet connection and try again.');
+    }
+  }
+
+  // ── Render main portal ──────────────────────────────────────
+  function renderPortal() {
+    const wrap = document.getElementById('portal-content');
+    wrap.innerHTML = `
+      <!-- RFQ Info -->
+      <div class="card">
+        <div class="card-title"><i class="fa fa-file-alt"></i> RFQ Details</div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-size:20px;font-weight:800;color:var(--text);">${rfqData.rfq_number}</div>
+            <div style="font-size:14px;color:var(--muted);margin-top:2px;">${rfqData.title}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;">Vendor</div>
+            <div style="font-size:14px;font-weight:700;">${vendorData.company_name}</div>
+            <div style="margin-top:4px;">
+              ${vendorData.oem_approved ? '<span class="badge badge-oem"><i class="fa fa-shield-alt"></i> OEM Verified</span>' : ''}
+              <span class="badge badge-warn">${vendorData.vendor_type}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rfq-info-grid">
+          <div class="rfq-info-item">
+            <label>RFQ Number</label>
+            <span>${rfqData.rfq_number}</span>
+          </div>
+          <div class="rfq-info-item">
+            <label>Quote Submission Deadline</label>
+            <span class="deadline">⏰ ${rfqData.deadline}</span>
+            <span style="font-size:10px;color:var(--muted);display:block;margin-top:3px;">
+              Submit your quotation before this date
+            </span>
+          </div>
+          ${rfqData.description ? `
+          <div class="rfq-info-item" style="grid-column:1/-1;">
+            <label>Procurement Details</label>
+            <span style="font-weight:500;">${rfqData.description}</span>
+          </div>` : ''}
+        </div>
+
+        <!-- Items Required -->
+        <div class="card-title"><i class="fa fa-boxes"></i> Items Required</div>
+        <div class="table-wrap">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>#</th><th>Description</th><th>Qty</th><th>Unit</th>
+                ${rfqItems.some(i => i.specification) ? '<th>Specification</th>' : ''}
+              </tr>
+            </thead>
+            <tbody>
+              ${rfqItems.map((item, i) => `
+                <tr>
+                  <td>${i+1}</td>
+                  <td><strong>${item.description}</strong></td>
+                  <td>${item.quantity}</td>
+                  <td>${item.unit}</td>
+                  ${rfqItems.some(x => x.specification) ? `<td style="color:var(--muted);font-size:12px;">${item.specification || '—'}</td>` : ''}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Quotation Form -->
+      <div class="card">
+        <div class="card-title"><i class="fa fa-pencil-alt"></i> Your Quotation</div>
+
+        <div class="form-row">
+          <div class="form-group" style="display:flex;flex-direction:column;justify-content:flex-end;">
+            <label>Your Delivery Commitment (Days) *
+              <span style="font-size:10px;font-weight:400;color:var(--muted);display:block;margin-top:2px;">
+                How many days after PO issuance can you deliver?
+              </span>
+            </label>
+            <input type="number" id="q-delivery" placeholder="e.g. 14" min="1" max="365"/>
+          </div>
+          <div class="form-group" style="display:flex;flex-direction:column;justify-content:flex-end;">
+            <label>Warranty (months)</label>
+            <input type="number" id="q-warranty" placeholder="e.g. 12" min="0" value="12"/>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label>Payment Terms *</label>
+          <select id="q-payment">
+            <option value="">-- Select Payment Terms --</option>
+            <option value="30 days net">30 days net</option>
+            <option value="45 days net">45 days net</option>
+            <option value="60 days net">60 days net</option>
+            <option value="30% advance, 70% on delivery">30% advance, 70% on delivery</option>
+            <option value="50% advance, 50% on delivery">50% advance, 50% on delivery</option>
+            <option value="100% advance">100% advance</option>
+            <option value="LC at sight">LC at sight</option>
+          </select>
+        </div>
+
+        <!-- Per-item pricing -->
+        <div class="card-title" style="margin:20px 0 12px;">
+          <i class="fa fa-tag"></i> Item-wise Pricing (excl. GST)
+        </div>
+        <div id="item-pricing">
+          ${rfqItems.map((item, i) => `
+            <div class="item-price-row" id="ipr-${i}">
+              <div>
+                <div class="item-label">${item.description}</div>
+                <div class="item-qty">Qty: ${item.quantity} ${item.unit}</div>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:11px;">Unit Price (₹)</label>
+                <input type="number" id="price-${i}" placeholder="0.00" min="0" step="0.01"
+                       data-qty="${item.quantity}" data-idx="${i}"
+                       oninput="recalcItem(${i})"/>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:11px;">GST %</label>
+                <input type="number" id="tax-${i}" value="18" min="0" max="28" step="0.5"
+                       oninput="recalcItem(${i})"/>
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--muted);font-weight:600;">Line Total</label>
+                <div class="total-cell" id="linetotal-${i}">₹ 0.00</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- Summary -->
+        <div class="quote-summary">
+          <div class="label"><i class="fa fa-rupee-sign"></i> Total Quote Value (incl. GST)</div>
+          <div class="value" id="grand-total">₹ 0.00</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:20px;">
+          <label>Additional Notes / Remarks</label>
+          <textarea id="q-notes" rows="3" placeholder="Special conditions, exclusions, validity period, etc."></textarea>
+        </div>
+
+        <button class="btn-submit" id="btn-submit" onclick="submitQuote()">
+          <i class="fa fa-paper-plane"></i> Submit Quotation
+        </button>
+        <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:12px;">
+          By submitting, you confirm this is your best and final quotation for ${rfqData.rfq_number}.
+        </p>
+      </div>
+    `;
+  }
+
+  // ── Live price calculation ──────────────────────────────────
+  function recalcItem(idx) {
+    const price = parseFloat(document.getElementById(`price-${idx}`).value) || 0;
+    const tax   = parseFloat(document.getElementById(`tax-${idx}`).value)   || 0;
+    const qty   = parseFloat(rfqItems[idx].quantity) || 1;
+    const lineTotal = qty * price * (1 + tax / 100);
+    document.getElementById(`linetotal-${idx}`).textContent =
+      '₹ ' + lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    recalcGrandTotal();
+  }
+
+  function recalcGrandTotal() {
+    let grand = 0;
+    rfqItems.forEach((item, i) => {
+      const price = parseFloat(document.getElementById(`price-${i}`)?.value) || 0;
+      const tax   = parseFloat(document.getElementById(`tax-${i}`)?.value)   || 0;
+      const qty   = parseFloat(item.quantity) || 1;
+      grand += qty * price * (1 + tax / 100);
+    });
+    document.getElementById('grand-total').textContent =
+      '₹ ' + grand.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // ── Submit quotation ────────────────────────────────────────
+  async function submitQuote() {
+    const delivery  = parseInt(document.getElementById('q-delivery').value);
+    const warranty  = parseInt(document.getElementById('q-warranty').value) || 12;
+    const payment   = document.getElementById('q-payment').value;
+    const notes     = document.getElementById('q-notes').value.trim();
+
+    if (!delivery || delivery < 1) {
+      alert('Please enter delivery days.'); return;
+    }
+    if (!payment) {
+      alert('Please select payment terms.'); return;
+    }
+
+    // Build items
+    const items = rfqItems.map((item, i) => {
+      const price = parseFloat(document.getElementById(`price-${i}`).value);
+      const tax   = parseFloat(document.getElementById(`tax-${i}`).value) || 18;
+      if (!price || price <= 0) return null;
+      return {
+        rfq_item_id : item.id,
+        description : item.description,
+        quantity    : parseFloat(item.quantity),
+        unit_price  : price,
+        tax_percent : tax
+      };
+    });
+
+    if (items.some(i => i === null)) {
+      alert('Please enter unit prices for all items.'); return;
+    }
+
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Submitting...';
+
+    try {
+      const res = await fetch(`${API}/rfq/vendor-portal/${TOKEN}/submit`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify({ delivery_days: delivery, payment_terms: payment,
+                                  warranty_months: warranty, notes, items })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || 'Submission failed. Try again.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-paper-plane"></i> Submit Quotation';
+        return;
+      }
+      showSuccess(data.quotation_number, data.total_amount);
+    } catch(e) {
+      alert('Network error. Please try again.');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa fa-paper-plane"></i> Submit Quotation';
+    }
+  }
+
+  // ── State screens ───────────────────────────────────────────
+  function showSuccess(qNum, total) {
+    document.getElementById('portal-content').innerHTML = `
+      <div class="state-card">
+        <div class="state-icon">✅</div>
+        <div class="state-title">Quotation Submitted!</div>
+        <div class="state-sub">
+          Your quotation <strong>${qNum}</strong> has been received by Matrix Comsec Pvt. Ltd.<br/><br/>
+          Total Value: <strong>₹${parseFloat(total).toLocaleString('en-IN', {minimumFractionDigits:2})}</strong><br/><br/>
+          The procurement team will review all quotations and contact you regarding the outcome.
+          You will be notified if you are selected.
+        </div>
+        <div style="margin-top:28px;padding:16px 24px;background:#f0fdf4;border-radius:10px;
+                    border:1px solid #bbf7d0;display:inline-block;text-align:left;">
+          <div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:4px;">
+            ✔ SUBMISSION RECORDED
+          </div>
+          <div style="font-size:13px;color:#166534;">
+            Reference: <strong>${qNum}</strong>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function showAlreadySubmitted() {
+    document.getElementById('portal-content').innerHTML = `
+      <div class="state-card">
+        <div class="state-icon">📋</div>
+        <div class="state-title">Quotation Already Submitted</div>
+        <div class="state-sub">
+          You have already submitted a quotation for <strong>${rfqData.rfq_number} — ${rfqData.title}</strong>.<br/><br/>
+          The procurement team is reviewing your submission along with other vendors.
+          You will be contacted if your quotation is selected.<br/><br/>
+          <em>If you need to make changes, contact: procurement@matrixcomsec.com</em>
+        </div>
+      </div>`;
+  }
+
+  function showError(title, message) {
+    document.getElementById('portal-content').innerHTML = `
+      <div class="state-card">
+        <div class="state-icon">❌</div>
+        <div class="state-title">${title}</div>
+        <div class="state-sub">${message}<br/><br/>
+          <em>Contact: procurement@matrixcomsec.com</em>
+        </div>
+      </div>`;
+  }
+
+  // Prevent accidental number scrolling updates
+  document.addEventListener("wheel", function(event) {
+    if (document.activeElement.type === "number") {
+      document.activeElement.blur();
+    }
+  }, { passive: false });
+</script>
+</body>
+</html>

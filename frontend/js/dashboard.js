@@ -1,4 +1,4 @@
-// dashboard.js — Loads KPI data into dashboard
+// dashboard.js ΓÇö Loads KPI data into dashboard
 document.addEventListener("DOMContentLoaded", async () => {
 
   // Set today's date
@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       approvalBox.innerHTML =
         `<div class="empty-state">
            <i class="fa fa-check-circle"></i>
-           <p>No pending approvals 🎉</p>
+           <p>No pending approvals ≡ƒÄë</p>
          </div>`;
     } else {
       approvalBox.innerHTML = `
@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       invBox.innerHTML =
         `<div class="empty-state">
            <i class="fa fa-check-circle"></i>
-           <p>All invoices are clean ✅</p>
+           <p>All invoices are clean Γ£à</p>
          </div>`;
     } else {
       invBox.innerHTML = `
@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               <td><i class="fa fa-exclamation-triangle" style="color:var(--red)"></i>
                   Unmatched Invoices</td>
               <td><span class="badge badge-mismatch">${unmatched}</span></td>
-              <td>—</td>
+              <td>ΓÇö</td>
             </tr>
             <tr>
               <td><i class="fa fa-clock" style="color:var(--orange)"></i>

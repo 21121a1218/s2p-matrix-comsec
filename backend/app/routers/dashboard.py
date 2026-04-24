@@ -31,13 +31,16 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
                        PurchaseOrder.status.in_(
                            ["Pending L1 Approval", "Pending L2 Approval"])).scalar()
     total_spend  = db.query(func.sum(PurchaseOrder.total_amount)).filter(
-                       PurchaseOrder.status.in_(["Approved", "Received", "Closed"])
+                       PurchaseOrder.status.in_(["Approved", "Sent to Vendor", "Acknowledged", "Partially Received", "Received", "Closed"])
                    ).scalar() or 0
 
     total_invoices    = db.query(func.count(Invoice.id)).scalar()
-    unmatched_invoices = db.query(func.count(Invoice.id)).filter(
-                             Invoice.match_status.in_(
-                                 ["Pending", "Mismatch", "Exception"])).scalar()
+    unmatched_invoices = db.query(func.count(Invoice.id))\
+                             .join(PurchaseOrder, Invoice.po_id == PurchaseOrder.id)\
+                             .filter(
+                                 Invoice.match_status.in_(["Pending", "Mismatch", "Exception"]),
+                                 PurchaseOrder.status.notin_(["Received", "Closed"])
+                             ).scalar()
     unpaid_invoices   = db.query(func.count(Invoice.id)).filter(
                              Invoice.payment_status == "Unpaid").scalar()
     unpaid_amount     = db.query(func.sum(Invoice.total_amount)).filter(

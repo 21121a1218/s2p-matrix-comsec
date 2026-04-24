@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Vendors — Matrix S2P</title>
+  <title>Vendors ΓÇö Matrix S2P</title>
   <link rel="stylesheet" href="../css/style.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
@@ -98,7 +98,7 @@
     <div class="modal">
       <div class="modal-header">
         <h2><i class="fa fa-building"></i> Add New Vendor</h2>
-        <button class="modal-close" onclick="closeModal()">×</button>
+        <button class="modal-close" onclick="closeModal()">├ù</button>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -181,7 +181,7 @@
     <div class="modal" style="max-width:400px;">
       <div class="modal-header">
         <h2><i class="fa fa-check-circle"></i> Approve Vendor</h2>
-        <button class="modal-close" onclick="closeApproveModal()">×</button>
+        <button class="modal-close" onclick="closeApproveModal()">├ù</button>
       </div>
       <div class="form-group">
         <label>Approver Name *</label>
@@ -230,8 +230,8 @@
             <td>${v.vendor_type}</td>
             <td>${v.oem_approved
               ? `<span style="color:var(--green)"><i class="fa fa-check-circle"></i> ${v.oem_brand||''}</span>`
-              : '<span style="color:var(--text-muted)">—</span>'}</td>
-            <td>${v.city||'—'}</td>
+              : '<span style="color:var(--text-muted)">ΓÇö</span>'}</td>
+            <td>${v.city||'ΓÇö'}</td>
             <td>${badge(v.status)}</td>
             <td>
               <div style="display:flex;align-items:center;gap:6px;">
@@ -292,7 +292,7 @@
           oem_approved   : document.getElementById("v-oem-approved").checked,
           msme_registered: document.getElementById("v-msme").checked,
         });
-        showToast("✅ Vendor added successfully!", "success");
+        showToast("Γ£à Vendor added successfully!", "success");
         closeModal();
         loadVendors();
       } catch(e) {
@@ -306,7 +306,7 @@
       if (!approver) { showToast("Enter approver name", "error"); return; }
       try {
         await api.post(`/vendors/${id}/approve?approver=${encodeURIComponent(approver)}`);
-        showToast("✅ Vendor approved!", "success");
+        showToast("Γ£à Vendor approved!", "success");
         closeApproveModal();
         loadVendors();
       } catch(e) { showToast("Error: " + e.message, "error"); }

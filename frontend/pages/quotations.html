@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Quotations — Matrix S2P</title>
+  <title>Quotations ΓÇö Matrix S2P</title>
   <link rel="stylesheet" href="../css/style.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
@@ -99,7 +99,7 @@
       try {
         const data = await api.get("/rfq/");
         const sel  = document.getElementById("compare-rfq-select");
-        data.rfqs.forEach(r => sel.appendChild(new Option(`${r.rfq_number} — ${r.title}`, r.id)));
+        data.rfqs.forEach(r => sel.appendChild(new Option(`${r.rfq_number} ΓÇö ${r.title}`, r.id)));
       } catch(e) {}
     }
 
@@ -118,7 +118,7 @@
             <td>RFQ #${q.rfq_id}</td>
             <td>Vendor #${q.vendor_id}</td>
             <td><strong>${formatINR(q.total_amount)}</strong></td>
-            <td>${q.delivery_days ? q.delivery_days + ' days' : '—'}</td>
+            <td>${q.delivery_days ? q.delivery_days + ' days' : 'ΓÇö'}</td>
             <td>${badge(q.status)}</td>
           </tr>`).join('');
       } catch(e) { showToast("Failed to load quotations", "error"); }
@@ -134,16 +134,16 @@
           <tr style="${q.recommended ? 'background:#f0fdf4;' : ''}">
             <td>
               ${i === 0
-                ? '<span style="font-size:20px;">🥇</span>'
-                : i === 1 ? '<span style="font-size:20px;">🥈</span>'
-                : i === 2 ? '<span style="font-size:20px;">🥉</span>'
+                ? '<span style="font-size:20px;">≡ƒÑç</span>'
+                : i === 1 ? '<span style="font-size:20px;">≡ƒÑê</span>'
+                : i === 2 ? '<span style="font-size:20px;">≡ƒÑë</span>'
                 : `#${i+1}`}
             </td>
             <td>${q.quotation_number}</td>
             <td>Vendor #${q.vendor_id}</td>
             <td><strong>${formatINR(q.total_amount)}</strong></td>
-            <td>${q.delivery_days ? q.delivery_days + ' days' : '—'}</td>
-            <td>${q.warranty_months ? q.warranty_months + ' mo' : '—'}</td>
+            <td>${q.delivery_days ? q.delivery_days + ' days' : 'ΓÇö'}</td>
+            <td>${q.warranty_months ? q.warranty_months + ' mo' : 'ΓÇö'}</td>
             <td>
               <div style="display:flex;align-items:center;gap:6px;">
                 <div style="background:#e2e8f0;border-radius:4px;height:8px;width:60px;overflow:hidden;">
@@ -167,8 +167,8 @@
             </td>
             <td>
               ${q.recommended
-                ? '<span style="color:var(--green);font-weight:700;">✅ Recommended</span>'
-                : '—'}
+                ? '<span style="color:var(--green);font-weight:700;">Γ£à Recommended</span>'
+                : 'ΓÇö'}
             </td>
           </tr>`).join('');
         document.getElementById("compare-result").style.display = "block";

@@ -42,10 +42,18 @@ def get_db():
 # Test connection
 def test_connection():
     try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        print("✅ Database connected successfully!")
-        return True
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        print("Database connected successfully!")
+        db.close()
     except Exception as e:
-        print(f"❌ Database connection failed: {e}")
+        print(f"Database connection failed: {e}")
         return False
+
+# --- FORCE LOAD ALL MODELS TO PREVENT MAPPING 500 ERRORS ---
+from app.models.vendor import Vendor, VendorDocument
+from app.models.rfq import RFQ, RFQItem, RFQVendor
+from app.models.quotation import Quotation, QuotationItem
+from app.models.purchase_order import PurchaseOrder, POItem
+from app.models.invoice import Invoice, GRN, GRNItem
+from app.models.payment import Payment, VendorPerformance

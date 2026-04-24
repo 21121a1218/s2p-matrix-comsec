@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Goods Receipt — Matrix S2P</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon"><i class="fa-solid fa-network-wired"></i></div>
+      <div class="logo-text"><span class="logo-main">Matrix S2P</span><span class="logo-sub">Comsec Pvt. Ltd.</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="../index.html"        class="nav-item"><i class="fa fa-chart-pie"></i><span>Dashboard</span></a>
+      <a href="vendors.html"         class="nav-item"><i class="fa fa-building"></i><span>Vendors</span></a>
+      <a href="rfq.html"             class="nav-item"><i class="fa fa-file-alt"></i><span>RFQ</span></a>
+      <a href="quotations.html"      class="nav-item"><i class="fa fa-balance-scale"></i><span>Quotations</span></a>
+      <a href="purchase_orders.html" class="nav-item"><i class="fa fa-shopping-cart"></i><span>Purchase Orders</span></a>
+      <a href="grn.html"             class="nav-item active"><i class="fa fa-boxes"></i><span>Goods Receipt</span></a>
+      <a href="invoices.html"        class="nav-item"><i class="fa fa-file-invoice"></i><span>Invoices</span></a>
+      <a href="payments.html"        class="nav-item"><i class="fa fa-money-bill-wave"></i><span>Payments</span></a>
+      <a href="performance.html"     class="nav-item"><i class="fa fa-star"></i><span>Performance</span></a>
+      <a href="ai_discovery.html"    class="nav-item"><i class="fa fa-robot"></i><span>AI Discovery</span></a>
+      <a href="sap_integration.html" class="nav-item"><i class="fa fa-plug"></i><span>SAP Integration</span></a>
+      <a href="contracts.html"       class="nav-item"><i class="fa fa-file-contract"></i><span>Contracts</span></a>
+      <a href="negotiations.html"    class="nav-item"><i class="fa fa-handshake"></i><span>Negotiations</span></a>
+      <a href="checklists.html"      class="nav-item"><i class="fa fa-tasks"></i><span>Checklists</span></a>
+      <a href="audit.html"           class="nav-item"><i class="fa fa-history"></i><span>Audit Trail</span></a>
+    </nav>
+    <div class="sidebar-footer"><span><i class="fa fa-circle green-dot"></i> System Online</span></div>
+  </div>
+
+  <div class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa fa-bars"></i></button>
+      <div class="topbar-title">
+        <h1>Goods Receipt Notes</h1>
+        <span>3-Way Match: PO → GRN → Invoice (BR-S2P-11)</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openReceiptModal()">
+          <i class="fa fa-plus"></i> Record Receipt
+        </button>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <!-- Stats Row -->
+      <div class="stats-grid" style="grid-template-columns: repeat(4,1fr); margin-bottom:1.5rem;">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(99,102,241,0.15);color:#6366f1;"><i class="fa fa-box"></i></div>
+          <div class="stat-info"><div class="stat-value" id="total-grn">—</div><div class="stat-label">Total GRNs</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(16,185,129,0.15);color:#10b981;"><i class="fa fa-check-circle"></i></div>
+          <div class="stat-info"><div class="stat-value" id="matched-grn">—</div><div class="stat-label">3-Way Matched</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:#f59e0b;"><i class="fa fa-clock"></i></div>
+          <div class="stat-info"><div class="stat-value" id="pending-grn">—</div><div class="stat-label">Pending Matching</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(239,68,68,0.15);color:#ef4444;"><i class="fa fa-exclamation-triangle"></i></div>
+          <div class="stat-info"><div class="stat-value" id="exception-grn">—</div><div class="stat-label">Exceptions</div></div>
+        </div>
+      </div>
+
+      <!-- GRN Table -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><i class="fa fa-clipboard-list"></i> Goods Receipt Register</h2>
+          <input type="text" class="search-box" id="grn-search" placeholder="Search GRN, PO, vendor..." oninput="filterGRNs(this.value)"/>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table" id="grn-table">
+            <thead>
+              <tr>
+                <th>GRN Number</th>
+                <th>PO Reference</th>
+                <th>Vendor Partner</th>
+                <th>Received Date</th>
+                <th>Items Received</th>
+                <th>Total Value</th>
+                <th>Match Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="grn-tbody">
+              <tr><td colspan="8" class="empty-state"><i class="fa fa-inbox"></i> Loading GRN records...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Record Receipt Modal -->
+  <div class="modal-overlay" id="receipt-modal">
+    <div class="modal" style="max-width:750px;">
+      <div class="modal-header">
+        <h3><i class="fa fa-boxes"></i> Record Goods Receipt</h3>
+        <button class="modal-close" onclick="closeReceiptModal()"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group" style="flex:1;">
+            <label>Select Purchase Order *</label>
+            <select id="po-select" onchange="loadPOItems(this.value)" class="form-control">
+              <option value="">-- Select Approved PO --</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label>Receipt Date *</label>
+            <input type="date" id="receipt-date" class="form-control"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Received By (Name) *</label>
+          <input type="text" id="received-by" class="form-control" placeholder="Warehouse Manager Name"/>
+        </div>
+        <div class="form-group">
+          <label>Items Received</label>
+          <div id="grn-items-container" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+            <table class="data-table" style="margin:0;">
+              <thead>
+                <tr>
+                  <th>Item Description</th>
+                  <th>Ordered Qty</th>
+                  <th>Received Qty</th>
+                  <th>Accepted Qty</th>
+                  <th>Condition</th>
+                </tr>
+              </thead>
+              <tbody id="grn-items-tbody">
+                <tr><td colspan="5" class="empty-state">Select a PO to load items</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Delivery Notes / Remarks</label>
+          <textarea id="grn-notes" class="form-control" rows="2" placeholder="Any delivery notes or discrepancies..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeReceiptModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitReceipt()"><i class="fa fa-check"></i> Record Receipt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRN Detail Modal -->
+  <div class="modal-overlay" id="grn-detail-modal">
+    <div class="modal" style="max-width:700px;">
+      <div class="modal-header">
+        <h3 id="grn-detail-title">GRN Details</h3>
+        <button class="modal-close" onclick="document.getElementById('grn-detail-modal').classList.remove('open')"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="grn-detail-body"></div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    let allGRNs = [];
+    let approvedPOs = [];
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    async function loadGRNs() {
+      try {
+        const data = await api.get('/grn/');
+        allGRNs = data.grns || [];
+        renderGRNTable(allGRNs);
+        updateStats(allGRNs);
+      } catch (e) {
+        document.getElementById('grn-tbody').innerHTML = `<tr><td colspan="8" class="empty-state"><i class="fa fa-exclamation-triangle"></i> Failed to load GRNs</td></tr>`;
+      }
+    }
+
+    function updateStats(grns) {
+      document.getElementById('total-grn').textContent = grns.length;
+      document.getElementById('matched-grn').textContent = grns.filter(g => g.match_status === 'Matched').length;
+      document.getElementById('pending-grn').textContent = grns.filter(g => g.match_status === 'Pending').length;
+      document.getElementById('exception-grn').textContent = grns.filter(g => g.match_status === 'Exception').length;
+    }
+
+    function renderGRNTable(grns) {
+      const tbody = document.getElementById('grn-tbody');
+      if (!grns.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><i class="fa fa-inbox"></i> No GRN records found</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = grns.map(g => {
+        const statusClass = g.match_status === 'Matched' ? 'badge-success' : g.match_status === 'Exception' ? 'badge-danger' : 'badge-warning';
+        const val = g.total_value ? `₹${parseFloat(g.total_value).toLocaleString('en-IN', {minimumFractionDigits:2})}` : '—';
+        return `
+          <tr>
+            <td><strong>${g.grn_number}</strong></td>
+            <td>${g.po_number || '—'}</td>
+            <td><span class="vendor-tag">${g.vendor_name || '—'}</span></td>
+            <td>${g.received_date ? new Date(g.received_date).toLocaleDateString('en-IN') : '—'}</td>
+            <td>${g.items_count || 0} item(s)</td>
+            <td>${val}</td>
+            <td><span class="badge ${statusClass}">${g.match_status}</span></td>
+            <td>
+              <button class="btn-icon" onclick="viewGRNDetail(${g.id})" title="View Details"><i class="fa fa-eye"></i></button>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    function filterGRNs(q) {
+      if (!q) { renderGRNTable(allGRNs); return; }
+      const filtered = allGRNs.filter(g =>
+        (g.grn_number||'').toLowerCase().includes(q.toLowerCase()) ||
+        (g.po_number||'').toLowerCase().includes(q.toLowerCase()) ||
+        (g.vendor_name||'').toLowerCase().includes(q.toLowerCase())
+      );
+      renderGRNTable(filtered);
+    }
+
+    async function openReceiptModal() {
+      document.getElementById('receipt-modal').classList.add('open');
+      document.getElementById('receipt-date').value = new Date().toISOString().split('T')[0];
+      await loadAvailablePOs();
+    }
+
+    function closeReceiptModal() {
+      document.getElementById('receipt-modal').classList.remove('open');
+      document.getElementById('po-select').value = '';
+      document.getElementById('grn-items-tbody').innerHTML = '<tr><td colspan="5" class="empty-state">Select a PO to load items</td></tr>';
+    }
+
+    async function loadAvailablePOs() {
+      try {
+        const [approved, sent, acknowledged, partial] = await Promise.all([
+          api.get('/purchase-orders/?status=Approved'),
+          api.get('/purchase-orders/?status=Sent to Vendor'),
+          api.get('/purchase-orders/?status=Acknowledged'),
+          api.get('/purchase-orders/?status=Partially Received')
+        ]);
+        approvedPOs = [
+          ...(approved.purchase_orders || []),
+          ...(sent.purchase_orders || []),
+          ...(acknowledged.purchase_orders || []),
+          ...(partial.purchase_orders || [])
+        ];
+        const sel = document.getElementById('po-select');
+        sel.innerHTML = '<option value="">-- Select a PO --</option>' +
+          approvedPOs.map(p => `<option value="${p.id}">${p.po_number} — ${p.vendor_name || 'Vendor'} (${p.status})</option>`).join('');
+      } catch (e) {
+        console.error('Failed to load POs', e);
+      }
+    }
+
+    async function loadPOItems(poId) {
+      if (!poId) {
+        document.getElementById('grn-items-tbody').innerHTML = '<tr><td colspan="5" class="empty-state">Select a PO to load items</td></tr>';
+        return;
+      }
+      try {
+        const poData = await api.get(`/purchase-orders/${poId}`);
+        const tbody = document.getElementById('grn-items-tbody');
+        tbody.innerHTML = poData.items.map(it => {
+          if (it.remaining_qty <= 0) return ''; // Skip fully received items
+          return `
+            <tr style="border-bottom: 1px solid #f1f5f9;" class="grn-item-row" data-po-item-id="${it.id}">
+              <td style="padding: 6px; font-weight: 500;">${it.description}</td>
+              <td style="padding: 6px; color: #64748b;">${it.quantity} <small>(Prev: ${(it.delivered_qty||0)}, Rem: ${it.remaining_qty||it.quantity})</small></td>
+              <td style="padding: 6px;"><input type="number" class="form-control recv-qty" style="width:80px;padding:4px;" value="${it.remaining_qty||it.quantity}" min="0" max="${it.remaining_qty||it.quantity}"/></td>
+              <td style="padding: 6px;"><input type="number" class="form-control acc-qty" style="width:80px;padding:4px;" value="${it.remaining_qty||it.quantity}" min="0" max="${it.remaining_qty||it.quantity}"/></td>
+              <td style="padding: 6px;">
+                <select class="form-control item-condition" style="width:120px;padding:4px;">
+                  <option value="Good">Good</option>
+                  <option value="Damaged">Damaged</option>
+                  <option value="Partial">Partial</option>
+                </select>
+              </td>
+            </tr>`;
+        }).join('') || '<tr><td colspan="5" class="empty-state">All items fully received for this PO</td></tr>';
+      } catch (e) {
+        console.error('Failed to load PO items', e);
+      }
+    }
+
+    async function submitReceipt() {
+      const poId = document.getElementById('po-select').value;
+      const receivedDate = document.getElementById('receipt-date').value;
+      const receivedBy = document.getElementById('received-by').value.trim();
+      const notes = document.getElementById('grn-notes').value.trim();
+
+      if (!poId || !receivedDate || !receivedBy) {
+        alert('Please fill in all required fields (PO, Date, Received By).');
+        return;
+      }
+
+      const rows = document.querySelectorAll('.grn-item-row');
+      if (!rows.length) { alert('No items to receive.'); return; }
+
+      const items = Array.from(rows).map(row => ({
+        po_item_id: parseInt(row.dataset.poItemId),
+        received_qty: parseFloat(row.querySelector('.recv-qty').value) || 0,
+        accepted_qty: parseFloat(row.querySelector('.acc-qty').value) || 0,
+        condition: row.querySelector('.item-condition').value
+      }));
+
+      try {
+        const payload = { po_id: parseInt(poId), received_date: receivedDate, received_by: receivedBy, notes, items };
+        const result = await api.post('/grn/', payload);
+        alert(`✅ GRN ${result.grn_number} recorded successfully!\nMatch Status: ${result.match_status}`);
+        closeReceiptModal();
+        loadGRNs();
+      } catch (e) {
+        alert('❌ Failed to record receipt: ' + (e.message || 'Server error'));
+      }
+    }
+
+    async function viewGRNDetail(grnId) {
+      try {
+        const data = await api.get(`/grn/${grnId}`);
+        const modal = document.getElementById('grn-detail-modal');
+        document.getElementById('grn-detail-title').textContent = `GRN: ${data.grn_number}`;
+        const statusClass = data.match_status === 'Matched' ? 'badge-success' : data.match_status === 'Exception' ? 'badge-danger' : 'badge-warning';
+        document.getElementById('grn-detail-body').innerHTML = `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+            <div><strong>GRN Number:</strong> ${data.grn_number}</div>
+            <div><strong>PO Reference:</strong> ${data.po_number || '—'}</div>
+            <div><strong>Vendor:</strong> ${data.vendor_name || '—'}</div>
+            <div><strong>Received Date:</strong> ${data.received_date ? new Date(data.received_date).toLocaleDateString('en-IN') : '—'}</div>
+            <div><strong>Received By:</strong> ${data.received_by || '—'}</div>
+            <div><strong>Match Status:</strong> <span class="badge ${statusClass}">${data.match_status}</span></div>
+          </div>
+          ${data.match_notes ? `<div class="alert-box" style="background:rgba(245,158,11,0.1);border-left:4px solid #f59e0b;padding:0.75rem;border-radius:6px;margin-bottom:1rem;"><strong>Match Notes:</strong> ${data.match_notes}</div>` : ''}
+          <h4 style="margin-bottom:0.5rem;">Line Items</h4>
+          <table class="data-table">
+            <thead><tr><th>Item</th><th>Received</th><th>Accepted</th><th>Condition</th></tr></thead>
+            <tbody>
+              ${(data.items||[]).map(it => `
+                <tr>
+                  <td>${it.description || it.po_item_id}</td>
+                  <td>${it.received_qty}</td>
+                  <td>${it.accepted_qty}</td>
+                  <td><span class="badge ${it.condition === 'Good' ? 'badge-success' : 'badge-warning'}">${it.condition}</span></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`;
+        modal.classList.add('open');
+      } catch (e) {
+        alert('Failed to load GRN details');
+      }
+    }
+
+    loadGRNs();
+  </script>
+</body>
+</html>

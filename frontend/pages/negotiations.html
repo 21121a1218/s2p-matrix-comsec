@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Negotiations — Matrix S2P</title>
+  <title>Negotiations ΓÇö Matrix S2P</title>
   <link rel="stylesheet" href="../css/style.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
@@ -52,19 +52,19 @@
       <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">
         <div class="kpi-card blue">
           <div class="kpi-icon"><i class="fa fa-handshake"></i></div>
-          <div class="kpi-data"><span class="kpi-value" id="kpi-neg-total">—</span><span class="kpi-label">Total Negotiations</span></div>
+          <div class="kpi-data"><span class="kpi-value" id="kpi-neg-total">ΓÇö</span><span class="kpi-label">Total Negotiations</span></div>
         </div>
         <div class="kpi-card green">
           <div class="kpi-icon"><i class="fa fa-rupee-sign"></i></div>
-          <div class="kpi-data"><span class="kpi-value" id="kpi-savings">—</span><span class="kpi-label">Total Savings (INR)</span></div>
+          <div class="kpi-data"><span class="kpi-value" id="kpi-savings">ΓÇö</span><span class="kpi-label">Total Savings (INR)</span></div>
         </div>
         <div class="kpi-card purple">
           <div class="kpi-icon"><i class="fa fa-percent"></i></div>
-          <div class="kpi-data"><span class="kpi-value" id="kpi-savings-pct">—</span><span class="kpi-label">Avg Savings %</span></div>
+          <div class="kpi-data"><span class="kpi-value" id="kpi-savings-pct">ΓÇö</span><span class="kpi-label">Avg Savings %</span></div>
         </div>
         <div class="kpi-card orange">
           <div class="kpi-icon"><i class="fa fa-clock"></i></div>
-          <div class="kpi-data"><span class="kpi-value" id="kpi-open">—</span><span class="kpi-label">Open Negotiations</span></div>
+          <div class="kpi-data"><span class="kpi-value" id="kpi-open">ΓÇö</span><span class="kpi-label">Open Negotiations</span></div>
         </div>
       </div>
 
@@ -94,7 +94,7 @@
     <div class="modal" style="max-width:600px;">
       <div class="modal-header">
         <h2><i class="fa fa-handshake"></i> Start Negotiation</h2>
-        <button class="modal-close" onclick="document.getElementById('neg-modal').classList.remove('open')">×</button>
+        <button class="modal-close" onclick="document.getElementById('neg-modal').classList.remove('open')">├ù</button>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -142,7 +142,7 @@
     <div class="modal" style="max-width:480px;">
       <div class="modal-header">
         <h2><i class="fa fa-check-circle"></i> Record Outcome</h2>
-        <button class="modal-close" onclick="document.getElementById('close-neg-modal').classList.remove('open')">×</button>
+        <button class="modal-close" onclick="document.getElementById('close-neg-modal').classList.remove('open')">├ù</button>
       </div>
       <input type="hidden" id="close-neg-id"/>
       <div class="form-group">
@@ -152,8 +152,8 @@
       <div class="form-group">
         <label>Outcome</label>
         <select id="close-status">
-          <option value="Agreed">Agreed ✅</option>
-          <option value="Failed">Failed ❌</option>
+          <option value="Agreed">Agreed Γ£à</option>
+          <option value="Failed">Failed Γ¥î</option>
           <option value="In Progress">Still In Progress</option>
         </select>
       </div>
@@ -162,7 +162,7 @@
         <textarea id="close-notes" rows="3" placeholder="Key commitments, conditions agreed..."></textarea>
       </div>
       <div id="savings-preview" style="background:#f0fdf4;border-radius:8px;padding:12px;margin-top:8px;display:none;">
-        <strong>💰 Projected Savings:</strong>
+        <strong>≡ƒÆ░ Projected Savings:</strong>
         <span id="savings-calc" style="color:var(--green);font-size:18px;font-weight:800;"></span>
       </div>
       <div style="display:flex;gap:12px;margin-top:16px;justify-content:flex-end;">
@@ -207,14 +207,14 @@
                 title="${n.subject}">${n.subject}</td>
             <td>${formatINR(n.initial_price)}</td>
             <td style="color:var(--blue);">${formatINR(n.target_price)}</td>
-            <td><strong>${n.agreed_price ? formatINR(n.agreed_price) : '—'}</strong></td>
+            <td><strong>${n.agreed_price ? formatINR(n.agreed_price) : 'ΓÇö'}</strong></td>
             <td>
               ${n.savings_achieved > 0
                 ? `<span style="color:var(--green);font-weight:700;">
                      ${formatINR(n.savings_achieved)}
                      <small>(${n.savings_percent}%)</small>
                    </span>`
-                : '—'}
+                : 'ΓÇö'}
             </td>
             <td>${badge(n.status)}</td>
             <td>
@@ -222,7 +222,7 @@
                 ? `<button class="btn btn-success" style="padding:4px 10px;font-size:12px;"
                      onclick="openCloseModal(${n.id},${n.initial_price})">
                      <i class="fa fa-check"></i> Record
-                   </button>` : '—'}
+                   </button>` : 'ΓÇö'}
             </td>
           </tr>`).join('');
       } catch(e) { showToast("Failed to load negotiations", "error"); }
@@ -233,7 +233,7 @@
         const data = await api.get("/vendors/");
         const sel  = document.getElementById("neg-vendor");
         data.vendors.forEach(v =>
-          sel.appendChild(new Option(`${v.vendor_code} — ${v.company_name}`, v.id)));
+          sel.appendChild(new Option(`${v.vendor_code} ΓÇö ${v.company_name}`, v.id)));
       } catch(e) {}
     }
 
@@ -255,7 +255,7 @@
           delivery_commitment: document.getElementById("neg-delivery").value,
           negotiated_by      : document.getElementById("neg-by").value
         });
-        showToast(`✅ Negotiation ${res.ref} started!`, "success");
+        showToast(`Γ£à Negotiation ${res.ref} started!`, "success");
         document.getElementById("neg-modal").classList.remove("open");
         loadNegotiations();
       } catch(e) { showToast("Error: " + e.message, "error"); }
@@ -289,7 +289,7 @@
           status       : status,
           outcome_notes: notes
         });
-        showToast(`✅ Outcome saved! Savings: ${formatINR(res.savings_achieved)} (${res.savings_percent}%)`,
+        showToast(`Γ£à Outcome saved! Savings: ${formatINR(res.savings_achieved)} (${res.savings_percent}%)`,
                   "success");
         document.getElementById("close-neg-modal").classList.remove("open");
         loadNegotiations();

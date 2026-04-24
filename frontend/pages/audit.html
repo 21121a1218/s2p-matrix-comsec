@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Audit Trail — Matrix S2P</title>
+  <title>Audit Trail ΓÇö Matrix S2P</title>
   <link rel="stylesheet" href="../css/style.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
@@ -140,7 +140,7 @@
             <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;">
               ${l.new_values
                 ? `<span style="color:var(--text-muted);">${JSON.stringify(l.new_values).substring(0,60)}...</span>`
-                : '—'}
+                : 'ΓÇö'}
             </td>
           </tr>`).join('');
       } catch(e) { showToast("Failed to load audit log", "error"); }

@@ -5,6 +5,7 @@
 from sqlalchemy.orm import Session
 from app.models.vendor import Vendor
 from app.models.payment import VendorPerformance
+from app.models.purchase_order import PurchaseOrder
 
 def discover_vendors_for_category(
     category : str,
@@ -50,80 +51,111 @@ def discover_vendors_for_category(
 
 
 def qualify_vendor(vendor: Vendor, db: Session) -> tuple:
-    score   = 0.0
+    """
+    Intelligent AI Discovery Logic:
+    1. Historical Reliability Dominance (60%)
+    2. Compliance & Verification (20%)
+    3. Structural & Strategic Fit (20%)
+    4. Confidence Multiplier (Penalty for lack of data)
+    """
     reasons = []
     flags   = []
-
-    # Rule 1: OEM Approval (+25)
-    if vendor.oem_approved:
-        score += 25
-        reasons.append(f"✅ OEM approved for {vendor.oem_brand or 'known brand'}")
+    
+    # --- Pillar 1: Real-time Historical Performance (50 pts) ---
+    perf_records = db.query(VendorPerformance).filter(VendorPerformance.vendor_id == vendor.id).all()
+    history_count = len(perf_records)
+    
+    # Real-time Volume & Delivery calculation directly from live POs
+    pos = db.query(PurchaseOrder).filter(PurchaseOrder.vendor_id == vendor.id).all()
+    realtime_total_orders = len(pos)
+    
+    if realtime_total_orders > 0:
+        delivered_pos = [po for po in pos if po.status in ["Received", "Closed"]]
+        delivered_count = len(delivered_pos)
+        realtime_delivery_rate = (delivered_count / realtime_total_orders) * 100
+        
+        # Fallback to historical quality/response if available, else assume neutral 80%
+        avg_quality  = sum(float(p.quality_score or 0) for p in perf_records) / history_count if history_count > 0 else 80.0
+        avg_response = sum(float(p.response_score or 0) for p in perf_records) / history_count if history_count > 0 else 80.0
+        
+        # Weighted History: 50% Real-time Delivery, 30% Quality, 20% Response
+        raw_perf = (realtime_delivery_rate * 0.5) + (avg_quality * 0.3) + (avg_response * 0.2)
+        
+        # Penalize Risk Outliers
+        if realtime_delivery_rate < 60:
+            raw_perf -= 15
+            flags.append(f"🚨 High Delivery Risk: Live on-time rate {realtime_delivery_rate:.1f}%")
+        if avg_quality < 70:
+            raw_perf -= 10
+            flags.append(f"⚠️ Quality Concerns: Historical quality score {avg_quality:.1f}%")
+            
+        perf_score = (raw_perf / 100) * 50
+        reasons.append(f"✅ Proven History: {realtime_delivery_rate:.1f}% delivery rate over {realtime_total_orders} live orders")
     else:
-        flags.append("⚠️ No OEM approval — verify product authenticity")
+        # Day-Zero Neutral Start
+        perf_score = 25  # Mid-score for unknown
+        reasons.append("ℹ️ New Vendor: No live delivery history in system yet")
 
-    # Rule 2: GST Registration (+15)
-    if vendor.gst_number:
-        score += 15
-        reasons.append("✅ GST registered — tax compliance confirmed")
+    # --- Pillar 2: Compliance Foundation (20 pts) ---
+    compliance_score = 0
+    if vendor.gst_number and vendor.pan_number:
+        compliance_score += 20
+        reasons.append("✅ Fully Verified: GST and PAN records confirmed")
+    elif vendor.gst_number:
+        compliance_score += 10
+        flags.append("⚠️ Partial Compliance: Missing PAN record")
     else:
-        flags.append("❌ Missing GST number — compliance risk")
+        flags.append("❌ Non-Compliant: Missing GST/PAN")
 
-    # Rule 3: Performance Score (+30 max)
-    perf = float(vendor.performance_score or 0)
-    if perf >= 80:
-        score += 30
-        reasons.append(f"✅ Excellent performance score: {perf}/100")
-    elif perf >= 60:
-        score += 20
-        reasons.append(f"✅ Good performance score: {perf}/100")
-    elif perf >= 40:
-        score += 10
-        reasons.append(f"⚠️ Average performance score: {perf}/100")
-    elif perf == 0:
-        score += 15
-        reasons.append("ℹ️ No performance history — new vendor")
-    else:
-        flags.append(f"❌ Low performance score: {perf}/100")
-
-    # Rule 4: MSME Bonus (+5)
-    if vendor.msme_registered:
-        score += 5
-        reasons.append("✅ MSME registered — preferred policy")
-
-    # Rule 5: Vendor Type (+3 to +10)
+    # --- Pillar 3: Structural Fit (20 pts) ---
+    struct_score = 0
     if vendor.vendor_type == "OEM":
-        score += 10
-        reasons.append("✅ Direct OEM — best pricing & warranty")
+        struct_score += 20
+        reasons.append("✅ Strategic Fit: Direct OEM for maximum reliability")
     elif vendor.vendor_type == "Distributor":
-        score += 7
-        reasons.append("✅ Authorised distributor — reliable supply")
-    elif vendor.vendor_type == "Trader":
-        score += 3
-        flags.append("⚠️ Trader — verify product authenticity")
+        struct_score += 15
+        if vendor.oem_approved:
+            struct_score += 5
+            reasons.append("✅ Strategic Fit: Authorised OEM Distributor")
+        else:
+            reasons.append("ℹ️ Distributor: No direct OEM letter found")
+    else:
+        struct_score += 5
+        flags.append("⚠️ Type Risk: Trading entity — verify source authenticity")
 
-    # Rule 6: Local vendor (+5)
-    gujarat_cities = ["ahmedabad","surat","vadodara","rajkot",
-                      "gandhinagar","anand","bharuch"]
+    # Rule: Local Bonus (Max 10 pts)
+    local_score = 0
+    gujarat_cities = ["ahmedabad","surat","vadodara","rajkot","gandhinagar"]
     if vendor.city and vendor.city.lower() in gujarat_cities:
-        score += 5
-        reasons.append("✅ Gujarat-based — faster delivery")
+        local_score += 10
+        reasons.append("✅ Local logistics bonus: Faster delivery transit")
 
-    score = min(round(score, 2), 100.0)
-    return score, reasons, flags
+    # --- Confidence Weighting (The Intelligence Factor) ---
+    raw_final = perf_score + compliance_score + struct_score + local_score
+    
+    # Confidence Factor: 0.7 for new, scales to 1.0 with 5+ orders
+    import math
+    confidence = 0.7 + (0.3 * (1 - math.exp(-history_count / 2)))
+    
+    final_score = round(raw_final * confidence, 2)
+    
+    if final_score > 90:
+        reasons.insert(0, "🌟 PREFERRED CHAMPION")
+    elif final_score < 40:
+        flags.append("⛔ HIGH RISK VENDOR")
 
+    return min(final_score, 100.0), reasons, flags
 
 def get_recommendation(score: float, flags: list) -> str:
-    critical = [f for f in flags if f.startswith("❌")]
-    if score >= 80 and not critical:
-        return "🟢 STRONGLY RECOMMENDED"
-    elif score >= 65 and not critical:
-        return "🟡 RECOMMENDED"
+    critical = [f for f in flags if "🚨" in f or "❌" in f or "⛔" in f]
+    if score >= 85 and not critical:
+        return "🟢 TOP PERFORMER (Verified Legend)"
+    elif score >= 70 and not critical:
+        return "🟡 RELIABLE (Highly Recommended)"
     elif score >= 50:
-        return "🟠 CONDITIONAL — address risk flags first"
-    elif score >= 35:
-        return "🔴 CAUTION — additional vetting required"
+        return "🟠 CONDITIONAL (New/Limited History)"
     else:
-        return "⛔ NOT RECOMMENDED"
+        return "🔴 NOT RECOMMENDED (Risk Detected)"
 
 
 def get_market_benchmark(category: str, db: Session) -> dict:

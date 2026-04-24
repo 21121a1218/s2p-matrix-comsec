@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Invoices — Matrix S2P</title>
+  <title>Invoices ΓÇö Matrix S2P</title>
   <link rel="stylesheet" href="../css/style.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
@@ -39,7 +39,7 @@
       <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa fa-bars"></i></button>
       <div class="topbar-title">
         <h1>Invoice Reconciliation</h1>
-        <span>3-Way Match: PO ↔ GRN ↔ Invoice (BR-S2P-10)</span>
+        <span>3-Way Match: PO Γåö GRN Γåö Invoice (BR-S2P-10)</span>
       </div>
       <div class="topbar-right">
         <button class="btn btn-primary" onclick="document.getElementById('inv-modal').classList.add('open')">
@@ -70,7 +70,7 @@
     <div class="modal" style="max-width:580px;">
       <div class="modal-header">
         <h2><i class="fa fa-file-invoice"></i> Record Invoice</h2>
-        <button class="modal-close" onclick="document.getElementById('inv-modal').classList.remove('open')">×</button>
+        <button class="modal-close" onclick="document.getElementById('inv-modal').classList.remove('open')">├ù</button>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -128,7 +128,7 @@
         const vSel  = document.getElementById("inv-vendor");
         const poSel = document.getElementById("inv-po");
         vData.vendors.forEach(v => {
-          const o = new Option(`${v.vendor_code} — ${v.company_name}`, v.id);
+          const o = new Option(`${v.vendor_code} ΓÇö ${v.company_name}`, v.id);
           vSel.appendChild(o);
         });
         poData.purchase_orders.forEach(p => {
@@ -150,7 +150,7 @@
         tbody.innerHTML = data.invoices.map(inv => `
           <tr>
             <td><strong>${inv.internal_ref}</strong></td>
-            <td>${inv.invoice_number}${inv.is_duplicate ? ' <span style="color:var(--red);font-size:11px;">⚠️ DUP</span>' : ''}</td>
+            <td>${inv.invoice_number}${inv.is_duplicate ? ' <span style="color:var(--red);font-size:11px;">ΓÜá∩╕Å DUP</span>' : ''}</td>
             <td>Vendor #${inv.vendor_id}</td>
             <td>${formatDate(inv.invoice_date)}</td>
             <td><strong>${formatINR(inv.total_amount)}</strong></td>
@@ -191,7 +191,7 @@
           total_amount   : parseFloat(amount)
         });
         if (res.warning) showToast(res.warning, "error");
-        else showToast(`✅ Invoice ${res.invoice.internal_ref} recorded!`, "success");
+        else showToast(`Γ£à Invoice ${res.invoice.internal_ref} recorded!`, "success");
         document.getElementById("inv-modal").classList.remove("open");
         loadInvoices();
       } catch(e) { showToast("Error: " + e.message, "error"); }
@@ -201,8 +201,8 @@
       try {
         const res = await api.post(`/invoices/${id}/match`);
         const msg = res.match_status === 'Matched'
-          ? `✅ 3-Way Match Passed!`
-          : `⚠️ Match Status: ${res.match_status} — ${res.issues.join(', ')}`;
+          ? `Γ£à 3-Way Match Passed!`
+          : `ΓÜá∩╕Å Match Status: ${res.match_status} ΓÇö ${res.issues.join(', ')}`;
         showToast(msg, res.match_status === 'Matched' ? 'success' : 'error');
         loadInvoices();
       } catch(e) { showToast(e.message, "error"); }

@@ -1,5 +1,5 @@
 /* =====================================================
-   S2P Matrix Comsec — Global Stylesheet
+   S2P Matrix Comsec ΓÇö Global Stylesheet
    ===================================================== */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -33,7 +33,7 @@ body {
   min-height : 100vh;
 }
 
-/* ── SIDEBAR ── */
+/* ΓöÇΓöÇ SIDEBAR ΓöÇΓöÇ */
 .sidebar {
   width          : var(--sidebar-w);
   background     : var(--sidebar-bg);
@@ -95,7 +95,7 @@ body {
 }
 .green-dot { color: #22c55e; margin-right: 6px; font-size: 10px; }
 
-/* ── MAIN CONTENT ── */
+/* ΓöÇΓöÇ MAIN CONTENT ΓöÇΓöÇ */
 .main-content {
   margin-left: var(--sidebar-w);
   flex       : 1;
@@ -104,7 +104,7 @@ body {
   min-height : 100vh;
 }
 
-/* ── TOPBAR ── */
+/* ΓöÇΓöÇ TOPBAR ΓöÇΓöÇ */
 .topbar {
   height         : var(--topbar-h);
   background     : var(--card-bg);
@@ -140,10 +140,10 @@ body {
 
 .user-avatar { font-size: 28px; color: var(--text-muted); cursor: pointer; }
 
-/* ── CONTENT BODY ── */
+/* ΓöÇΓöÇ CONTENT BODY ΓöÇΓöÇ */
 .content-body { padding: 24px; display: flex; flex-direction: column; gap: 24px; }
 
-/* ── KPI CARDS ── */
+/* ΓöÇΓöÇ KPI CARDS ΓöÇΓöÇ */
 .kpi-grid {
   display              : grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -189,14 +189,14 @@ body {
 .kpi-value { font-size: 26px; font-weight: 800; color: var(--text-dark); display: block; }
 .kpi-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
-/* ── SECTION ROW ── */
+/* ΓöÇΓöÇ SECTION ROW ΓöÇΓöÇ */
 .section-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
 
-/* ── CARDS ── */
+/* ΓöÇΓöÇ CARDS ΓöÇΓöÇ */
 .card {
   background   : var(--card-bg);
   border-radius: var(--radius);
@@ -220,7 +220,7 @@ body {
 
 .loading-msg { color: var(--text-muted); font-size: 14px; padding: 8px 0; }
 
-/* ── STATUS BADGES ── */
+/* ΓöÇΓöÇ STATUS BADGES ΓöÇΓöÇ */
 .badge {
   display      : inline-block;
   padding      : 3px 10px;
@@ -236,7 +236,7 @@ body {
 .badge-matched   { background: #dcfce7; color: #15803d; }
 .badge-mismatch  { background: #fee2e2; color: #991b1b; }
 
-/* ── TABLE ── */
+/* ΓöÇΓöÇ TABLE ΓöÇΓöÇ */
 .data-table {
   width          : 100%;
   border-collapse: collapse;
@@ -261,7 +261,7 @@ body {
 .data-table tr:last-child td { border-bottom: none; }
 .data-table tr:hover { background: #f8fafc; }
 
-/* ── FORMS ── */
+/* ΓöÇΓöÇ FORMS ΓöÇΓöÇ */
 .form-group { margin-bottom: 16px; }
 .form-group label {
   display     : block;
@@ -291,7 +291,7 @@ body {
 }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
-/* ── BUTTONS ── */
+/* ΓöÇΓöÇ BUTTONS ΓöÇΓöÇ */
 .btn {
   padding      : 10px 20px;
   border       : none;
@@ -312,7 +312,7 @@ body {
 .btn:hover    { opacity: 0.88; transform: translateY(-1px); }
 .btn:active   { transform: translateY(0); }
 
-/* ── QUICK ACTIONS ── */
+/* ΓöÇΓöÇ QUICK ACTIONS ΓöÇΓöÇ */
 .quick-actions { display: flex; flex-wrap: wrap; gap: 12px; padding: 20px; }
 .qa-btn {
   padding      : 12px 20px;
@@ -333,7 +333,7 @@ body {
 .qa-btn.purple { background: var(--purple); }
 .qa-btn.teal   { background: var(--teal);   }
 
-/* ── MODAL ── */
+/* ΓöÇΓöÇ MODAL ΓöÇΓöÇ */
 .modal-overlay {
   display        : none;
   position       : fixed;
@@ -361,7 +361,7 @@ body {
 .modal-header h2 { font-size: 18px; }
 .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); }
 
-/* ── ALERT / TOAST ── */
+/* ΓöÇΓöÇ ALERT / TOAST ΓöÇΓöÇ */
 .toast {
   position     : fixed;
   bottom       : 24px;
@@ -386,7 +386,7 @@ body {
   to   { transform: translateY(0);    opacity: 1; }
 }
 
-/* ── PAGE HEADER ── */
+/* ΓöÇΓöÇ PAGE HEADER ΓöÇΓöÇ */
 .page-header {
   display        : flex;
   justify-content: space-between;
@@ -395,7 +395,7 @@ body {
 }
 .page-header h2 { font-size: 22px; font-weight: 700; }
 
-/* ── EMPTY STATE ── */
+/* ΓöÇΓöÇ EMPTY STATE ΓöÇΓöÇ */
 .empty-state {
   text-align: center;
   padding   : 40px 20px;
@@ -404,7 +404,7 @@ body {
 .empty-state i    { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
 .empty-state p    { font-size: 15px; }
 
-/* ── RESPONSIVE ── */
+/* ΓöÇΓöÇ RESPONSIVE ΓöÇΓöÇ */
 @media (max-width: 768px) {
   .sidebar       { transform: translateX(-100%); }
   .sidebar.open  { transform: translateX(0); }

@@ -30,8 +30,11 @@ class QuotationCreate(BaseModel):
 
 def generate_quotation_number(db: Session) -> str:
     year  = datetime.now().year
-    count = db.query(func.count(Quotation.id)).scalar()
-    return f"QUO-{year}-{str(count + 1).zfill(4)}"
+    max_id = db.query(func.max(Quotation.id)).scalar() or 0
+    return f"QUO-{year}-{str(max_id + 1).zfill(4)}"
+
+from app.models.vendor import Vendor
+from app.models.rfq import RFQ, RFQVendor
 
 # GET all quotations (optionally filter by RFQ)
 @router.get("/")
@@ -39,7 +42,19 @@ def get_quotations(rfq_id: Optional[int] = None, db: Session = Depends(get_db)):
     query = db.query(Quotation)
     if rfq_id:
         query = query.filter(Quotation.rfq_id == rfq_id)
-    return {"quotations": query.order_by(Quotation.submitted_at.desc()).all()}
+    quos = query.order_by(Quotation.submitted_at.desc()).all()
+    
+    results = []
+    for q in quos:
+        vendor = db.query(Vendor).filter(Vendor.id == q.vendor_id).first()
+        rfq = db.query(RFQ).filter(RFQ.id == q.rfq_id).first()
+        
+        q_dict = {c.name: getattr(q, c.name) for c in q.__table__.columns}
+        q_dict["vendor_name"] = vendor.company_name if vendor else f"Vendor #{q.vendor_id}"
+        q_dict["rfq_number"] = rfq.rfq_number if rfq else f"RFQ #{q.rfq_id}"
+        results.append(q_dict)
+
+    return {"quotations": results}
 
 # GET single quotation
 @router.get("/{quotation_id}")
@@ -102,43 +117,58 @@ def create_quotation(data: QuotationCreate, db: Session = Depends(get_db)):
     db.refresh(quotation)
     return {"message": "Quotation submitted", "quotation": quotation}
 
-# GET comparison — all quotes for one RFQ side by side
+# GET comparison — all quotes for one RFQ, uses unified AI engine (same as pipeline)
 @router.get("/compare/{rfq_id}")
-def compare_quotations(rfq_id: int, db: Session = Depends(get_db)):
+def compare_quotations(
+    rfq_id  : int,
+    strategy: str = "best_value",    # best_value | lowest_cost
+    db: Session = Depends(get_db)
+):
+    """
+    AI Quotation Comparison — delegates to the same quotation_comparator.py
+    used by the /api/workflow/run pipeline. Guarantees UI and pipeline agree
+    on the winner. Supports ?strategy=best_value or ?strategy=lowest_cost.
+    """
+    from app.services.quotation_comparator import compare_and_select
+
     quotes = db.query(Quotation).filter(Quotation.rfq_id == rfq_id).all()
     if not quotes:
         raise HTTPException(status_code=404, detail="No quotations found for this RFQ")
 
-    # Simple rule-based scoring (Phase 6 will add AI)
-    min_price    = min(q.total_amount for q in quotes)
-    max_delivery = max(q.delivery_days or 999 for q in quotes)
+    result = compare_and_select(rfq_id=rfq_id, db=db, strategy=strategy)
 
-    results = []
-    for q in quotes:
-        price_score    = round((float(min_price) / float(q.total_amount)) * 40, 2)
-        delivery_score = round(((max_delivery - (q.delivery_days or max_delivery)) /
-                                max(max_delivery, 1)) * 30, 2)
-        warranty_score = min((q.warranty_months or 0) * 2, 20)
-        total_score    = round(price_score + delivery_score + warranty_score, 2)
-
-        results.append({
-            "quotation_id"    : q.id,
-            "quotation_number": q.quotation_number,
-            "vendor_id"       : q.vendor_id,
-            "total_amount"    : float(q.total_amount),
-            "delivery_days"   : q.delivery_days,
-            "warranty_months" : q.warranty_months,
-            "payment_terms"   : q.payment_terms,
-            "price_score"     : price_score,
-            "delivery_score"  : delivery_score,
-            "warranty_score"  : warranty_score,
-            "total_score"     : total_score,
-            "recommended"     : False
+    # Build a flat 'comparison' list matching the shape the frontend expects
+    comparison = []
+    for r in result.get("ranked", []):
+        comparison.append({
+            "quotation_id"     : r["quotation_id"],
+            "quotation_number" : r["quotation_number"],
+            "vendor_id"        : r["vendor_id"],
+            "vendor_name"      : r["vendor_name"],
+            "vendor_type"      : r["vendor_type"],
+            "oem_approved"     : r["oem_approved"],
+            "total_amount"     : r["total_amount"],
+            "delivery_days"    : r["delivery_days"],
+            "warranty_months"  : r["warranty_months"],
+            "payment_terms"    : r["payment_terms"],
+            # Unified scores (all on 0-100 scale, weighted)
+            "price_score"      : r["price_score"],
+            "delivery_score"   : r["delivery_score"],
+            "warranty_score"   : r["warranty_score"],
+            "performance_score": r["performance_score"],
+            "total_score"      : r["ai_score"],       # alias for frontend compat
+            "ai_score"         : r["ai_score"],
+            "reasoning"        : r["reasoning"],
+            "recommended"      : r["recommended"],
         })
 
-    # Mark highest scorer as recommended
-    results.sort(key=lambda x: x["total_score"], reverse=True)
-    if results:
-        results[0]["recommended"] = True
-
-    return {"rfq_id": rfq_id, "comparison": results}
+    return {
+        "rfq_id"             : rfq_id,
+        "strategy"           : strategy,
+        "weights"            : result.get("weights_used"),
+        "total_quotes"       : result.get("total_quotes"),
+        "savings_vs_highest" : result.get("savings_vs_highest"),
+        "price_range"        : result.get("price_range"),
+        "winner"             : result.get("winner"),
+        "comparison"         : comparison,
+    }

@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>S2P Demo Simulator — Matrix Comsec</title>
+  <meta name="description" content="AI-powered Source-to-Pay lifecycle automation pipeline for Matrix Comsec procurement operations."/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    /* ── Pipeline Runner Page Styles ─────────────────────────── */
+    :root {
+      --pipe-bg     : #0d1117;
+      --pipe-card   : #161b22;
+      --pipe-border : #30363d;
+      --pipe-accent : #58a6ff;
+      --pipe-green  : #3fb950;
+      --pipe-orange : #d29922;
+      --pipe-red    : #f85149;
+      --pipe-purple : #8b5cf6;
+      --pipe-teal   : #0d9488;
+      --pipe-text   : #c9d1d9;
+      --pipe-sub    : #8b949e;
+    }
+
+    .pipeline-page {
+      padding: 0;
+      background: var(--pipe-bg);
+      min-height: 100vh;
+    }
+
+    /* ── Controls Strip ───────────────────────────────────── */
+    .pipeline-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto auto;
+      gap: 12px;
+      align-items: end;
+      background: var(--pipe-card);
+      border: 1px solid var(--pipe-border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+    .ctrl-group { display: flex; flex-direction: column; gap: 6px; }
+    .ctrl-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--pipe-sub);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+    }
+    .ctrl-group input,
+    .ctrl-group select {
+      background: #0d1117;
+      border: 1px solid var(--pipe-border);
+      color: var(--pipe-text);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      transition: border-color .2s;
+    }
+    .ctrl-group input:focus,
+    .ctrl-group select:focus {
+      outline: none;
+      border-color: var(--pipe-accent);
+    }
+
+    .btn-run {
+      background: linear-gradient(135deg, #1f6feb, #58a6ff);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 28px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 4px 20px rgba(31,111,235,.35);
+    }
+    .btn-run:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(31,111,235,.5); }
+    .btn-run:active { transform: translateY(0); }
+    .btn-run:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .btn-complete {
+      background: linear-gradient(135deg, #0d9488, #2dd4bf);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 22px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 4px 20px rgba(13,148,136,.35);
+    }
+    .btn-complete:hover { transform: translateY(-2px); }
+    .btn-complete:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* ── Stage Progress Rail ──────────────────────────────── */
+    .stage-rail {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      margin-bottom: 28px;
+      position: relative;
+    }
+    .stage-rail::before {
+      content: '';
+      position: absolute;
+      top: 22px;
+      left: 32px;
+      right: 32px;
+      height: 2px;
+      background: var(--pipe-border);
+      z-index: 0;
+    }
+    .rail-progress {
+      position: absolute;
+      top: 22px;
+      left: 32px;
+      height: 2px;
+      background: linear-gradient(90deg, #1f6feb, #3fb950);
+      z-index: 1;
+      transition: width 0.6s ease;
+      width: 0%;
+    }
+
+    .stage-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      z-index: 2;
+      cursor: pointer;
+    }
+    .step-bubble {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid var(--pipe-border);
+      background: var(--pipe-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: var(--pipe-sub);
+      transition: all .3s ease;
+      position: relative;
+    }
+    .step-bubble.done {
+      border-color: var(--pipe-green);
+      background: rgba(63,185,80,.12);
+      color: var(--pipe-green);
+      box-shadow: 0 0 12px rgba(63,185,80,.3);
+    }
+    .step-bubble.active {
+      border-color: var(--pipe-accent);
+      background: rgba(88,166,255,.12);
+      color: var(--pipe-accent);
+      box-shadow: 0 0 16px rgba(88,166,255,.4);
+      animation: pulse-ring 1.5s infinite;
+    }
+    .step-bubble.error {
+      border-color: var(--pipe-red);
+      background: rgba(248,81,73,.12);
+      color: var(--pipe-red);
+    }
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 0 0 0 rgba(88,166,255,.4); }
+      70%  { box-shadow: 0 0 0 10px rgba(88,166,255,0); }
+      100% { box-shadow: 0 0 0 0 rgba(88,166,255,0); }
+    }
+
+    .step-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--pipe-sub);
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      line-height: 1.3;
+      max-width: 80px;
+      transition: color .3s;
+    }
+    .stage-step.done .step-label  { color: var(--pipe-green); }
+    .stage-step.active .step-label { color: var(--pipe-accent); }
+
+    /* ── Stage Cards Grid ─────────────────────────────────── */
+    .stages-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .stage-card {
+      background: var(--pipe-card);
+      border: 1px solid var(--pipe-border);
+      border-radius: 12px;
+      padding: 16px;
+      transition: border-color .3s, box-shadow .3s;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .stage-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--pipe-border);
+      transition: background .3s;
+    }
+    .stage-card.done::before     { background: var(--pipe-green); }
+    .stage-card.active::before   { background: var(--pipe-accent); }
+    .stage-card.error::before    { background: var(--pipe-red); }
+    .stage-card.skipped::before  { background: var(--pipe-orange); }
+
+    .stage-card.done   { border-color: rgba(63,185,80,.35); }
+    .stage-card.active { border-color: rgba(88,166,255,.4); box-shadow: 0 4px 20px rgba(88,166,255,.15); }
+    .stage-card.error  { border-color: rgba(248,81,73,.35); }
+
+    .sc-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .sc-num {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--pipe-border);
+      color: var(--pipe-sub);
+      font-size: 11px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all .3s;
+    }
+    .stage-card.done .sc-num   { background: rgba(63,185,80,.2); color: var(--pipe-green); }
+    .stage-card.active .sc-num { background: rgba(88,166,255,.2);color: var(--pipe-accent); }
+    .stage-card.error .sc-num  { background: rgba(248,81,73,.2); color: var(--pipe-red); }
+
+    .sc-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--pipe-text);
+      flex: 1;
+    }
+    .sc-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: var(--pipe-border);
+      color: var(--pipe-sub);
+      transition: all .3s;
+    }
+    .stage-card.done .sc-badge   { background: rgba(63,185,80,.15); color: var(--pipe-green); }
+    .stage-card.active .sc-badge { background: rgba(88,166,255,.15); color: var(--pipe-accent); }
+    .stage-card.error .sc-badge  { background: rgba(248,81,73,.15); color: var(--pipe-red); }
+    .stage-card.skipped .sc-badge { background: rgba(210,153,34,.15); color: var(--pipe-orange); }
+
+    .sc-detail {
+      font-size: 12px;
+      color: var(--pipe-sub);
+      line-height: 1.5;
+      min-height: 36px;
+    }
+    .sc-detail strong { color: var(--pipe-text); }
+    .sc-metric {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--pipe-border);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .sc-kv {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .sc-kv-key   { font-size: 9px; color: var(--pipe-sub); text-transform: uppercase; letter-spacing: .5px; }
+    .sc-kv-val   { font-size: 13px; font-weight: 700; color: var(--pipe-text); }
+
+    /* ── Spinner ─────────────────────────────────────────── */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── JSON Result Panel ────────────────────────────────── */
+    .result-panel {
+      background: var(--pipe-card);
+      border: 1px solid var(--pipe-border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+    .result-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--pipe-border);
+      background: rgba(255,255,255,.02);
+    }
+    .result-panel-header h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--pipe-text);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-copy {
+      background: transparent;
+      border: 1px solid var(--pipe-border);
+      color: var(--pipe-sub);
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-copy:hover { border-color: var(--pipe-accent); color: var(--pipe-accent); }
+
+    .result-pre {
+      padding: 16px 20px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #c9d1d9;
+      max-height: 380px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* ── Summary Banner ─────────────────────────────────── */
+    .summary-banner {
+      display: none;
+      background: linear-gradient(135deg, rgba(63,185,80,.12), rgba(13,148,136,.08));
+      border: 1px solid rgba(63,185,80,.3);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-top: 20px;
+      gap: 24px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .summary-banner.visible { display: flex; }
+    .sb-item { display: flex; flex-direction: column; gap: 4px; }
+    .sb-label { font-size: 10px; color: var(--pipe-sub); text-transform: uppercase; letter-spacing: .7px; }
+    .sb-value { font-size: 20px; font-weight: 800; color: var(--pipe-green); }
+    .sb-value.accent { color: var(--pipe-accent); }
+    .sb-value.orange { color: var(--pipe-orange); }
+
+    /* ── Responsive ─────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      .stages-grid { grid-template-columns: repeat(2, 1fr); }
+      .pipeline-controls { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .stages-grid { grid-template-columns: 1fr; }
+      .pipeline-controls { grid-template-columns: 1fr; }
+      .stage-rail { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+      <div class="sidebar-header" onclick="window.location.href='../index.html'" style="cursor:pointer;" title="Go to Dashboard">
+      <div class="logo-icon"><i class="fa-solid fa-network-wired"></i></div>
+      <div class="logo-text">
+        <span class="logo-main">HG INFO TECH</span>
+        <span class="logo-sub">S2P Workflow Automation</span>
+      </div>
+    </div>
+  <nav class="sidebar-nav">
+      <a href="../index.html" class="nav-item" data-page="dashboard">
+        <i class="fa fa-chart-pie"></i><span>Dashboard</span>
+      </a>
+      <a href="vendors.html" class="nav-item" data-page="vendors">
+        <i class="fa fa-building"></i><span>Vendors</span>
+      </a>
+      <a href="rfq.html" class="nav-item" data-page="rfq">
+        <i class="fa fa-file-alt"></i><span>RFQ</span>
+      </a>
+      <a href="quotations.html" class="nav-item" data-page="quotations">
+        <i class="fa fa-balance-scale"></i><span>Quotations</span>
+      </a>
+      <a href="negotiations.html" class="nav-item" data-page="negotiations">
+        <i class="fa fa-handshake"></i><span>Negotiations</span>
+      </a>
+      <a href="contracts.html" class="nav-item" data-page="contracts">
+        <i class="fa fa-file-signature"></i><span>Contracts</span>
+      </a>
+      <a href="purchase_orders.html" class="nav-item" data-page="po">
+        <i class="fa fa-shopping-cart"></i><span>Purchase Orders</span>
+      </a>
+      <a href="grn.html" class="nav-item" data-page="grn">
+        <i class="fa fa-truck-loading"></i><span>Goods Receipt</span>
+      </a>
+      <a href="invoices.html" class="nav-item" data-page="invoices">
+        <i class="fa fa-file-invoice"></i><span>Invoices</span>
+      </a>
+      <a href="payments.html" class="nav-item" data-page="payments">
+        <i class="fa fa-money-bill-wave"></i><span>Payments</span>
+      </a>
+      <a href="checklists.html" class="nav-item" data-page="checklists">
+        <i class="fa fa-tasks"></i><span>Checklists</span>
+      </a>
+      <a href="audit.html" class="nav-item" data-page="audit">
+        <i class="fa fa-history"></i><span>Audit Trail</span>
+      </a>
+      <a href="sap_integration.html" class="nav-item" data-page="sap_integration">
+        <i class="fa fa-plug"></i><span>SAP Integration</span>
+      </a>
+    </nav>
+  <div class="sidebar-footer"><span><i class="fa fa-circle green-dot"></i> System Online</span></div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+  <header class="topbar">
+    <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa fa-bars"></i></button>
+    <div class="topbar-title">
+      <h1 id="page-title">S2P Demo Simulator</h1>
+      <span id="page-subtitle">Compresses 45-day procurement lifecycle into seconds for demonstration</span>
+    </div>
+    <div class="topbar-right">
+      <span class="badge-date" id="today-date"></span>
+      <div class="user-avatar"><i class="fa fa-user-circle"></i></div>
+    </div>
+  </header>
+
+  <div class="content-body pipeline-page">
+
+    <!-- ── Controls ─────────────────────────────────────────── -->
+    <div class="pipeline-controls">
+      <div class="ctrl-group">
+        <label><i class="fa fa-file-alt"></i> RFQ ID</label>
+        <input type="number" id="inp-rfq-id" placeholder="e.g. 1" min="1"
+               oninput="onRFQIdChange()"/>
+      </div>
+      <div class="ctrl-group">
+        <label><i class="fa fa-robot"></i> Strategy</label>
+        <select id="inp-strategy">
+          <option value="best_value" selected>Best Value (Cost + Performance)</option>
+          <option value="lowest_cost">Lowest Cost</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <label><i class="fa fa-users"></i> Top Vendors</label>
+        <select id="inp-top-vendors">
+          <option value="5">Top 5 Vendors</option>
+          <option value="7" selected>Top 7 Vendors</option>
+          <option value="10">Top 10 Vendors</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-run" id="btn-run" onclick="runPipeline()">
+          <i class="fa fa-flask"></i> Run Full S2P Simulation
+        </button>
+      </div>
+      <button class="btn-complete" id="btn-complete" onclick="openCompleteModal()" disabled>
+        <i class="fa fa-flag-checkered"></i> Simulate Stage 6–8
+      </button>
+    </div>
+
+    <!-- ── DEMO MODE Notice ──────────────────────────────── -->
+    <div style="background:linear-gradient(135deg,rgba(139,92,246,0.15),rgba(26,86,219,0.1));
+                border:1px solid rgba(139,92,246,0.4); border-radius:10px;
+                padding:14px 20px; margin-bottom:20px;
+                display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap;">
+      <span style="font-size:22px;">&#x26A1;</span>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#a78bfa;margin-bottom:4px;">
+          DEMO SIMULATOR MODE
+        </div>
+        <div style="font-size:12px;color:var(--pipe-sub);line-height:1.6;">
+          This tool compresses a real 45-day S2P procurement lifecycle into seconds for demonstration purposes.<br/>
+          <strong style="color:var(--pipe-text);">Simulated:</strong>
+          Vendor quotations (auto-priced) &middot; PO auto-approval &middot; GRN (instant delivery) &middot; Invoice (auto-created from PO) &middot; Payment (instant confirm)<br/>
+          <strong style="color:var(--pipe-text);">Real in production:</strong>
+          Use RFQ page &rarr; Vendor Portal &rarr; Quotations &rarr; PO &rarr; GRN &rarr; Invoices &rarr; Payments modules
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Live Status Banner ─────────────────────────────────── -->
+    <div id="live-status-bar" style="display:none;
+         background:var(--pipe-card); border:1px solid var(--pipe-border);
+         border-radius:10px; padding:12px 20px; margin-bottom:16px;
+         display:none; align-items:center; gap:16px; flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span id="lsb-icon" style="font-size:20px;">🔍</span>
+        <span id="lsb-text" style="font-size:14px;font-weight:600;color:var(--pipe-text);">Scanning RFQ status...</span>
+      </div>
+      <div id="lsb-stage" style="font-size:12px;color:var(--pipe-sub);"></div>
+      <div id="lsb-action" style="margin-left:auto;"></div>
+    </div>
+
+    <!-- ── Stage Progress Rail ──────────────────────────────── -->
+    <div class="stage-rail" id="stage-rail">
+      <div class="rail-progress" id="rail-progress"></div>
+      <div class="stage-step" id="step-1" onclick="scrollToCard(1)">
+        <div class="step-bubble" id="bubble-1"><i class="fa fa-file-alt"></i></div>
+        <div class="step-label">RFQ Load</div>
+      </div>
+      <div class="stage-step" id="step-2" onclick="scrollToCard(2)">
+        <div class="step-bubble" id="bubble-2"><i class="fa fa-robot"></i></div>
+        <div class="step-label">AI Discovery</div>
+      </div>
+      <div class="stage-step" id="step-3" onclick="scrollToCard(3)">
+        <div class="step-bubble" id="bubble-3"><i class="fa fa-quote-right"></i></div>
+        <div class="step-label">Quotations</div>
+      </div>
+      <div class="stage-step" id="step-4" onclick="scrollToCard(4)">
+        <div class="step-bubble" id="bubble-4"><i class="fa fa-balance-scale"></i></div>
+        <div class="step-label">Comparison</div>
+      </div>
+      <div class="stage-step" id="step-5" onclick="scrollToCard(5)">
+        <div class="step-bubble" id="bubble-5"><i class="fa fa-shopping-cart"></i></div>
+        <div class="step-label">PO Created</div>
+      </div>
+      <div class="stage-step" id="step-6" onclick="scrollToCard(6)">
+        <div class="step-bubble" id="bubble-6"><i class="fa fa-truck"></i></div>
+        <div class="step-label">GRN</div>
+      </div>
+      <div class="stage-step" id="step-7" onclick="scrollToCard(7)">
+        <div class="step-bubble" id="bubble-7"><i class="fa fa-file-invoice"></i></div>
+        <div class="step-label">Invoice Match</div>
+      </div>
+      <div class="stage-step" id="step-8" onclick="scrollToCard(8)">
+        <div class="step-bubble" id="bubble-8"><i class="fa fa-money-bill-wave"></i></div>
+        <div class="step-label">Payment</div>
+      </div>
+    </div>
+
+    <!-- ── Stage Cards ───────────────────────────────────────── -->
+    <div class="stages-grid" id="stages-grid">
+      <!-- Stage 1 -->
+      <div class="stage-card" id="card-1">
+        <div class="sc-header">
+          <div class="sc-num">1</div>
+          <div class="sc-title">RFQ Loaded</div>
+          <span class="sc-badge" id="badge-1">Pending</span>
+        </div>
+        <div class="sc-detail" id="detail-1">Waiting for pipeline to start…</div>
+        <div class="sc-metric" id="metric-1" style="display:none"></div>
+      </div>
+      <!-- Stage 2 -->
+      <div class="stage-card" id="card-2">
+        <div class="sc-header">
+          <div class="sc-num">2</div>
+          <div class="sc-title">AI Vendor Discovery</div>
+          <span class="sc-badge" id="badge-2">Pending</span>
+        </div>
+        <div class="sc-detail" id="detail-2">AI will scan 1000+ vendors by category, OEM status, and performance score.</div>
+        <div class="sc-metric" id="metric-2" style="display:none"></div>
+      </div>
+      <!-- Stage 3 -->
+      <div class="stage-card" id="card-3">
+        <div class="sc-header">
+          <div class="sc-num">3</div>
+          <div class="sc-title">Quotations Generated</div>
+          <span class="sc-badge" id="badge-3">Pending</span>
+        </div>
+        <div class="sc-detail" id="detail-3">Simulate realistic pricing with ±15% variation per vendor type and OEM status.</div>
+        <div class="sc-metric" id="metric-3" style="display:none"></div>
+      </div>
+      <!-- Stage 4 -->
+      <div class="stage-card" id="card-4">
+        <div class="sc-header">
+          <div class="sc-num">4</div>
+          <div class="sc-title">AI Quotation Comparison</div>
+          <span class="sc-badge" id="badge-4">Pending</span>
+        </div>
+        <div class="sc-detail" id="detail-4">Weighted scoring: Price 40% · Delivery 25% · Warranty 20% · Performance 15%.</div>
+        <div class="sc-metric" id="metric-4" style="display:none"></div>
+      </div>
+      <!-- Stage 5 -->
+      <div class="stage-card" id="card-5">
+        <div class="sc-header">
+          <div class="sc-num">5</div>
+          <div class="sc-title">Purchase Order</div>
+          <span class="sc-badge" id="badge-5">Pending</span>
+        </div>
+        <div class="sc-detail" id="detail-5">Auto-create PO from winning quotation with L1 + L2 approval.</div>
+        <div class="sc-metric" id="metric-5" style="display:none"></div>
+      </div>
+      <!-- Stage 6 -->
+      <div class="stage-card" id="card-6">
+        <div class="sc-header">
+          <div class="sc-num">6</div>
+          <div class="sc-title">GRN / Goods Receipt</div>
+          <span class="sc-badge" id="badge-6">Pending</span>
+        </div>
+        <div class="sc-detail" id="detail-6">Record delivery against PO. Simulates realistic delivery date with ±2-day variance.</div>
+        <div class="sc-metric" id="metric-6" style="display:none"></div>
+      </div>
+      <!-- Stage 7 -->
+      <div class="stage-card" id="card-7">
+        <div class="sc-header">
+          <div class="sc-num">7</div>
+          <div class="sc-title">Invoice & 3-Way Match</div>
+          <span class="sc-badge" id="badge-7">Pending</span>
+        </div>
+        <div class="sc-detail" id="detail-7">5-check validation: Duplicate · PO Linkage · Vendor Match · Amount (±2%) · GRN Confirm.</div>
+        <div class="sc-metric" id="metric-7" style="display:none"></div>
+      </div>
+      <!-- Stage 8 -->
+      <div class="stage-card" id="card-8">
+        <div class="sc-header">
+          <div class="sc-num">8</div>
+          <div class="sc-title">Payment & Score Update</div>
+          <span class="sc-badge" id="badge-8">Pending</span>
+        </div>
+        <div class="sc-detail" id="detail-8">Process NEFT payment and auto-recalculate vendor performance score (BR-S2P-13).</div>
+        <div class="sc-metric" id="metric-8" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- ── Summary Banner ───────────────────────────────────── -->
+    <div class="summary-banner" id="summary-banner">
+      <div style="font-size:28px; color: var(--pipe-green);">✅</div>
+      <div class="sb-item">
+        <div class="sb-label">Pipeline</div>
+        <div class="sb-value" id="sb-pipeline">—</div>
+      </div>
+      <div class="sb-item">
+        <div class="sb-label">PO Number</div>
+        <div class="sb-value accent" id="sb-po">—</div>
+      </div>
+      <div class="sb-item">
+        <div class="sb-label">Winning Vendor</div>
+        <div class="sb-value" style="font-size:15px;color:var(--pipe-text)" id="sb-vendor">—</div>
+      </div>
+      <div class="sb-item">
+        <div class="sb-label">PO Value (INR)</div>
+        <div class="sb-value orange" id="sb-value">—</div>
+      </div>
+      <div class="sb-item">
+        <div class="sb-label">Vendors Evaluated</div>
+        <div class="sb-value" id="sb-vendors">—</div>
+      </div>
+      <div class="sb-item">
+        <div class="sb-label">Duration</div>
+        <div class="sb-value" style="font-size:15px;" id="sb-duration">—</div>
+      </div>
+    </div>
+
+    <!-- ── JSON Result Panel (collapsed by default) ──────────── -->
+    <div class="result-panel" id="result-panel" style="display:none; margin-top:20px;">
+      <div class="result-panel-header" onclick="toggleResultPanel()" style="cursor:pointer;">
+        <h3>
+          <i class="fa fa-code" style="color:var(--pipe-accent)"></i>
+          API Response — Structured Audit JSON
+          <span id="result-panel-chevron" style="margin-left:8px;font-size:12px;color:var(--pipe-sub);transition:transform .2s;">▶ Click to expand</span>
+        </h3>
+        <button class="btn-copy" onclick="event.stopPropagation();copyResult()">
+          <i class="fa fa-copy"></i> Copy
+        </button>
+      </div>
+      <pre class="result-pre" id="result-pre" style="display:none;">—</pre>
+    </div>
+
+  </div><!-- /content-body -->
+</div><!-- /main-content -->
+
+<!-- ── Complete PO Modal ─────────────────────────────────── -->
+<div id="complete-modal" style="
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,.7);
+  z-index:1000; align-items:center; justify-content:center;">
+  <div style="
+    background:#161b22; border:1px solid #30363d; border-radius:16px;
+    padding:32px; width:420px; max-width:95vw;">
+    <h3 style="font-size:18px;font-weight:800;color:#c9d1d9;margin:0 0 20px;">
+      <i class="fa fa-flag-checkered" style="color:#0d9488"></i>
+      Complete PO Lifecycle (Stage 6–8)
+    </h3>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="ctrl-group">
+        <label>PO ID</label>
+        <input type="number" id="inp-po-id" placeholder="Enter PO ID from Stage 5" min="1"/>
+      </div>
+      <div class="ctrl-group">
+        <label>Quality Status</label>
+        <select id="inp-quality">
+          <option value="Accepted">✅ Accepted</option>
+          <option value="Partially Accepted">🟡 Partially Accepted</option>
+          <option value="Rejected">❌ Rejected</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <label>Payment Mode</label>
+        <select id="inp-payment-mode">
+          <option value="NEFT" selected>NEFT</option>
+          <option value="RTGS">RTGS</option>
+          <option value="IMPS">IMPS</option>
+          <option value="Cheque">Cheque</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:24px;">
+      <button class="btn-complete" style="flex:1" id="btn-confirm-complete" onclick="runComplete()">
+        <i class="fa fa-play"></i> Run Stages 6–8
+      </button>
+      <button onclick="document.getElementById('complete-modal').style.display='none'"
+        style="background:#21262d;border:1px solid #30363d;color:#8b949e;border-radius:8px;padding:10px 18px;cursor:pointer;font-size:14px;">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js?v=2.0"></script>
+<script>
+  const API = window.API_BASE || 'http://localhost:8000';
+
+  // ── State ───────────────────────────────────────────────────
+  let lastPipelineResult = null;
+  let lastPOId           = null;
+  let rfqScanTimer       = null;   // debounce for auto-scan on RFQ ID change
+
+  // ── Init ────────────────────────────────────────────────────
+  document.getElementById('today-date').textContent =
+    new Date().toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
+
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+  }
+
+  // ── Stage helpers ──────────────────────────────────────────
+  function setStage(n, state, badge, detail, metrics) {
+    const card   = document.getElementById(`card-${n}`);
+    const bubble = document.getElementById(`bubble-${n}`);
+    const badgeEl= document.getElementById(`badge-${n}`);
+    const detailEl= document.getElementById(`detail-${n}`);
+    const step   = document.getElementById(`step-${n}`);
+    const metricEl= document.getElementById(`metric-${n}`);
+
+    // Reset
+    ['done','active','error','skipped'].forEach(c => {
+      card.classList.remove(c);
+      step.classList.remove(c);
+      bubble.classList.remove(c,'done','active','error');
+    });
+
+    card.classList.add(state);
+    step.classList.add(state);
+    bubble.classList.add(state === 'done' ? 'done' : state === 'active' ? 'active' : 'error');
+    badgeEl.textContent = badge;
+    card.classList.add(state);
+    detailEl.innerHTML  = detail;
+
+    if (metrics) {
+      metricEl.style.display = 'flex';
+      metricEl.innerHTML = metrics.map(([k, v]) =>
+        `<div class="sc-kv"><div class="sc-kv-key">${k}</div><div class="sc-kv-val">${v}</div></div>`
+      ).join('');
+    }
+
+    // Rail progress
+    const doneCount = [...Array(8)].filter((_,i) =>
+      document.getElementById(`card-${i+1}`)?.classList.contains('done')).length;
+    document.getElementById('rail-progress').style.width =
+      `${(doneCount / 7) * 100}%`;
+  }
+
+  function setActive(n, label) {
+    setStage(n, 'active', label || 'Running…',
+      `<span class="spinner"></span> Processing…`, null);
+  }
+
+  function scrollToCard(n) {
+    document.getElementById(`card-${n}`)?.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  // ── Run pipeline (stages 1–5) ───────────────────────────────
+  async function runPipeline() {
+    const rfqId    = parseInt(document.getElementById('inp-rfq-id').value);
+    const strategy = document.getElementById('inp-strategy').value;
+    const topN     = parseInt(document.getElementById('inp-top-vendors').value);
+
+    if (!rfqId || rfqId < 1) { alert('Please enter a valid RFQ ID'); return; }
+
+    const btn    = document.getElementById('btn-run');
+    const btnCmp = document.getElementById('btn-complete');
+    btn.disabled = btnCmp.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Running Pipeline…';
+    document.getElementById('summary-banner').classList.remove('visible');
+    document.getElementById('result-panel').style.display = 'none';
+    document.getElementById('live-status-bar').style.display = 'none';
+
+    resetUI();
+    for (let i = 1; i <= 5; i++) setActive(i, ['Loading RFQ','Discovering Vendors','Generating Quotes','Comparing Quotes','Creating PO'][i-1]+'…');
+
+    let data;
+    try {
+      const res = await fetch(`${API}/api/workflow/run`, {
+        method : 'POST',
+        headers: {'Content-Type':'application/json'},
+        body   : JSON.stringify({rfq_id: rfqId, strategy, top_vendors: topN})
+      });
+      data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Pipeline error');
+    } catch (err) {
+      for (let i = 1; i <= 5; i++) setStage(i, 'error', 'Error', `❌ ${err.message}`, null);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa fa-play"></i> Run Pipeline (Stage 1–5)';
+      return;
+    }
+
+    lastPipelineResult = data;
+    const s = data.stages || {};
+
+    // Stage 1
+    if (s.stage_1_rfq) {
+      const st = s.stage_1_rfq;
+      setStage(1, 'done', '✅ Done',
+        `<strong>${st.rfq_number}</strong> — ${st.title}<br/><small>Stage on entry: ${data.detected_stage_on_entry ?? '?'}</small>`,
+        [['Items', st.items_count], ['Est. Value', `₹${(st.estimated_value||0).toLocaleString('en-IN')}`], ['Duration', `${st.duration_ms}ms`]]
+      );
+    }
+
+    // Stage 2
+    if (s.stage_2_discovery) {
+      const st = s.stage_2_discovery;
+      const skipped = st.status?.includes('Skipped');
+      setStage(2, 'done', skipped ? '⏩ Skipped' : '✅ Done',
+        skipped ? `Vendors already assigned (${st.total_discovered})` :
+          `<strong>${st.total_discovered}</strong> vendors found → <strong>${st.selected_for_rfq}</strong> selected`,
+        [['Vendors', st.selected_for_rfq], ['Duration', `${st.duration_ms}ms`]]
+      );
+    }
+
+    // Stage 3
+    if (s.stage_3_quotations) {
+      const st = s.stage_3_quotations;
+      const skipped = st.status?.includes('Skipped');
+      setStage(3, 'done', skipped ? '⏩ Skipped' : '✅ Done',
+        skipped ? `${st.quotations_count} quotations already exist` :
+          `Generated <strong>${st.quotations_count}</strong> quotations`,
+        [['Quotes', st.quotations_count], ['Duration', `${st.duration_ms}ms`]]
+      );
+    }
+
+    // Stage 4
+    if (s.stage_4_comparison) {
+      const st = s.stage_4_comparison;
+      const skipped = st.status?.includes('Skipped');
+      const w = st.winner;
+      setStage(4, 'done', skipped ? '⏩ Skipped' : '✅ Done',
+        skipped ? `Winner already selected` :
+          w ? `Winner: <strong>${w.vendor_name}</strong>` : 'Comparison complete',
+        [['Status', skipped ? 'Already done' : 'Fresh run'], ['Duration', `${st.duration_ms}ms`]]
+      );
+    }
+
+    // Stage 5
+    if (s.stage_5_po) {
+      const po = s.stage_5_po.po;
+      const skipped = s.stage_5_po.status?.includes('Skipped');
+      lastPOId = po?.po_id;
+      setStage(5, 'done', skipped ? '⏩ Skipped' : '✅ Done',
+        skipped ? `PO <strong>${po?.po_number}</strong> already exists` :
+          `PO <strong>${po?.po_number}</strong> created`,
+        [['PO No.', po?.po_number], ['Total ₹', (po?.total_amount||0).toLocaleString('en-IN',{maximumFractionDigits:0})], ['Delivery', po?.delivery_date]]
+      );
+
+      // Pre-fill complete modal and enable button
+      document.getElementById('inp-po-id').value = po?.po_id || '';
+      btnCmp.disabled = false;
+      btnCmp.innerHTML = '<i class="fa fa-flag-checkered"></i> Continue from Stage 6';
+
+      // Summary banner
+      const summary = data.summary || {};
+      document.getElementById('sb-pipeline').textContent = skipped ? 'Stages 1–5 Already Done ⏩' : 'Stages 1–5 ✅';
+      document.getElementById('sb-po').textContent       = po?.po_number || '—';
+      document.getElementById('sb-vendor').textContent   = summary.winning_vendor || 'Existing PO';
+      document.getElementById('sb-value').textContent    = po ? '₹' + (po.total_amount||0).toLocaleString('en-IN',{maximumFractionDigits:0}) : '—';
+      document.getElementById('sb-vendors').textContent  = summary.vendors_evaluated || '—';
+      document.getElementById('sb-duration').textContent = data.total_duration_ms ? `${data.total_duration_ms}ms` : '—';
+      document.getElementById('summary-banner').classList.add('visible');
+    }
+
+    // Populate JSON (panel stays collapsed — user can expand it)
+    document.getElementById('result-panel').style.display = 'block';
+    // reset collapse state
+    document.getElementById('result-pre').style.display   = 'none';
+    document.getElementById('result-panel-chevron').textContent = '▶ Click to expand';
+    document.getElementById('result-pre').textContent = JSON.stringify(data, null, 2);
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa fa-play"></i> Run Pipeline (Stage 1–5)';
+  }
+
+  // ── Auto-scan when RFQ ID changes (debounced 600ms) ────────────
+  function onRFQIdChange() {
+    clearTimeout(rfqScanTimer);
+    const rfqId = parseInt(document.getElementById('inp-rfq-id').value);
+    if (!rfqId || rfqId < 1) return;
+    rfqScanTimer = setTimeout(() => scanStatus(true), 600);  // silent auto-scan
+  }
+
+  async function scanStatus(silent = false) {
+    const rfqId = parseInt(document.getElementById('inp-rfq-id').value);
+    if (!rfqId || rfqId < 1) { if (!silent) alert('Enter a valid RFQ ID'); return; }
+    if (!silent) resetUI();
+    document.getElementById('result-panel').style.display = 'none';
+
+    // Show the live status bar in scanning state
+    const bar = document.getElementById('live-status-bar');
+    bar.style.display = 'flex';
+    document.getElementById('lsb-icon').textContent = '🔍';
+    document.getElementById('lsb-text').textContent = `Scanning RFQ #${rfqId}...`;
+    document.getElementById('lsb-stage').textContent = '';
+    document.getElementById('lsb-action').innerHTML = '';
+
+    try {
+      const data = await api.get(`/workflow/status/${rfqId}`);
+      renderStatus(data, silent);
+    } catch (e) {
+      bar.style.display = 'none';
+      if (!silent) showToast(`RFQ #${rfqId} not found`, 'error');
+    }
+  }
+
+  function renderStatus(data, silent = false) {
+    const stages  = data.stages || [];
+    const current = data.current_stage || 0;
+    const bar     = document.getElementById('live-status-bar');
+    bar.style.display = 'flex';
+
+    const stageNames = ['', 'RFQ Loaded', 'Vendors Assigned', 'Quotations', 'Comparison', 'PO Created', 'GRN Done', 'Invoice Matched', 'Payment Done'];
+    const isDone     = (n) => stages.find(s => s.stage === n)?.done === true;
+
+    // ── Light up the rail for each confirmed done stage
+    if (!silent) resetUI();
+    stages.forEach(s => {
+      if (s.done) {
+        setStage(s.stage, 'done', '✅ Detected', s.detail || '✅ Completed', null);
+      }
+    });
+
+    // ── Determine next action
+    const poExists      = isDone(5);
+    const lifecycleDone = isDone(8);
+    const poData        = data.po;
+
+    if (lifecycleDone) {
+      document.getElementById('lsb-icon').textContent  = '✅';
+      document.getElementById('lsb-text').textContent  = `RFQ #${data.rfq_id} — Lifecycle FULLY COMPLETE (All 8 stages)`;
+      document.getElementById('lsb-stage').textContent = `Payment: ${data.payment?.ref || 'Processed'}`;
+      document.getElementById('btn-run').disabled      = true;
+      document.getElementById('btn-complete').disabled = true;
+    } else if (poExists) {
+      // Stages 1-5 done, ready for 6-8
+      lastPOId = poData?.po_id || null;
+      if (lastPOId) document.getElementById('inp-po-id').value = lastPOId;
+
+      document.getElementById('lsb-icon').textContent  = '🟡';
+      document.getElementById('lsb-text').innerHTML    = `RFQ #${data.rfq_id} — Stages 1–5 Complete &bull; <strong>Ready to receive & pay</strong>`;
+      document.getElementById('lsb-stage').textContent = `PO: ${poData?.po_number || ''} • ${poData?.status || ''} • Stage ${current} of 8`;
+      document.getElementById('lsb-action').innerHTML  =
+        `<span style="font-size:12px;color:var(--pipe-orange);font-weight:700;">&#9654; Click "Complete PO (Stage 6–8)" to continue</span>`;
+
+      document.getElementById('btn-run').disabled      = true;
+      document.getElementById('btn-run').title         = 'Stages 1-5 already complete for this RFQ';
+      document.getElementById('btn-complete').disabled = false;
+      document.getElementById('btn-complete').innerHTML=
+        '<i class="fa fa-flag-checkered"></i> Continue from Stage 6';
+    } else {
+      // Nothing or partial 1-4
+      document.getElementById('lsb-icon').textContent  = '⏳';
+      document.getElementById('lsb-text').textContent  = `RFQ #${data.rfq_id} — Stage ${current} of 8 completed`;
+      document.getElementById('lsb-stage').textContent = `Next: ${stageNames[current + 1] || 'Run pipeline'}`;
+
+      document.getElementById('btn-run').disabled      = false;
+      document.getElementById('btn-complete').disabled = true;
+      document.getElementById('btn-complete').innerHTML=
+        '<i class="fa fa-flag-checkered"></i> Complete PO (Stage 6–8)';
+    }
+  }
+
+
+
+  function resetUI() {
+    for (let i = 1; i <= 8; i++) {
+      const card = document.getElementById(`card-${i}`);
+      const step = document.getElementById(`step-${i}`);
+      const bubble = document.getElementById(`bubble-${i}`);
+      ['done','active','error','skipped'].forEach(c => {
+        card.classList.remove(c); step.classList.remove(c);
+        bubble.classList.remove(c,'done','active','error');
+      });
+      document.getElementById(`badge-${i}`).textContent = 'Pending';
+      document.getElementById(`metric-${i}`).style.display = 'none';
+      document.getElementById(`detail-${i}`).innerHTML = "Waiting...";
+    }
+    document.getElementById('rail-progress').style.width = '0%';
+  }
+
+  // ── Run pipeline (stages 1–5) ───────────────────────────────
+  async function runPipeline() {
+    const rfqId    = parseInt(document.getElementById('inp-rfq-id').value);
+    const strategy = document.getElementById('inp-strategy').value;
+    const topN     = parseInt(document.getElementById('inp-top-vendors').value);
+
+    if (!rfqId || rfqId < 1) { alert('Please enter a valid RFQ ID'); return; }
+
+    const btn = document.getElementById('btn-run');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Running Pipeline…';
+    document.getElementById('btn-complete').disabled = true;
+    document.getElementById('summary-banner').classList.remove('visible');
+    document.getElementById('result-panel').style.display = 'none';
+
+    resetUI();
+
+    // Show stages 1–5 as active in sequence
+    for (let i = 1; i <= 5; i++) setActive(i, ['Loading RFQ','Discovering Vendors','Generating Quotes','Comparing Quotes','Creating PO'][i-1]+'…');
+
+    let data;
+    try {
+      const res = await fetch(`${API}/api/workflow/run`, {
+        method : 'POST',
+        headers: {'Content-Type':'application/json'},
+        body   : JSON.stringify({rfq_id: rfqId, strategy, top_vendors: topN})
+      });
+      data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Pipeline error');
+    } catch (err) {
+      for (let i = 1; i <= 5; i++) setStage(i, 'error', 'Error', `❌ ${err.message}`, null);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa fa-play"></i> Run Pipeline (Stage 1–5)';
+      return;
+    }
+
+    lastPipelineResult = data;
+
+    // Render stage results
+    const s = data.stages || {};
+
+    // Stage 1
+    if (s.stage_1_rfq) {
+      const st = s.stage_1_rfq;
+      setStage(1, 'done', '✅ Done',
+        `<strong>${st.rfq_number}</strong> — ${st.title}`,
+        [['Items', st.items_count], ['Est. Value', `₹${(st.estimated_value||0).toLocaleString('en-IN')}`], ['Duration', `${st.duration_ms}ms`]]
+      );
+    }
+
+    // Stage 2
+    if (s.stage_2_discovery) {
+      const st = s.stage_2_discovery;
+      const topV = (st.top_vendors||[]).slice(0,3).map(v =>
+        `<div style="font-size:11px;margin-top:4px">• ${v.company_name} <span style="color:var(--pipe-green)">(${v.ai_match_score})</span>${v.oem_approved?' 🏅':''}</div>`
+      ).join('');
+      setStage(2, 'done', '✅ Done',
+        `<strong>${st.total_discovered}</strong> vendors found → <strong>${st.selected_for_rfq}</strong> selected for ${st.category}<br/>${topV}`,
+        [['Total Found', st.total_discovered], ['Selected', st.selected_for_rfq], ['Duration', `${st.duration_ms}ms`]]
+      );
+    } else if (data.result && data.result.includes('No vendors')) {
+      setStage(2, 'error', '⚠️ No Vendors', 'No approved vendors found for this category.', null);
+    }
+
+    // Stage 3
+    if (s.stage_3_quotations) {
+      const st = s.stage_3_quotations;
+      const prices = (st.quotations||[]).map(q => q.total_amount).filter(Boolean);
+      const minP   = prices.length ? Math.min(...prices) : 0;
+      const maxP   = prices.length ? Math.max(...prices) : 0;
+      setStage(3, 'done', '✅ Done',
+        `Generated <strong>${st.quotations_count}</strong> quotations with simulated pricing`,
+        [['Quotes', st.quotations_count], ['Min ₹', minP.toLocaleString('en-IN',{maximumFractionDigits:0})], ['Max ₹', maxP.toLocaleString('en-IN',{maximumFractionDigits:0})], ['Duration', `${st.duration_ms}ms`]]
+      );
+    }
+
+    // Stage 4
+    if (s.stage_4_comparison) {
+      const st = s.stage_4_comparison;
+      const w = st.winner;
+      setStage(4, 'done', '✅ Done',
+        w ? `Winner: <strong>${w.vendor_name}</strong><br/>Score: ${w.ai_score}/100 · ₹${(w.total_amount||0).toLocaleString('en-IN', {maximumFractionDigits:0})} · ${w.delivery_days}d delivery`
+          : 'Comparison complete — no clear winner',
+        w ? [['AI Score', `${w.ai_score}/100`], ['Strategy', st.strategy], ['Duration', `${st.duration_ms}ms`]] : []
+      );
+    }
+
+    // Stage 5
+    if (s.stage_5_po) {
+      const po = s.stage_5_po.po;
+      lastPOId = po?.po_id;
+
+      setStage(5, 'done', '✅ Done',
+        `PO <strong>${po?.po_number}</strong> created — Approved<br/>Delivery: ${po?.delivery_date}`,
+        [['PO No.', po?.po_number], ['Total ₹', (po?.total_amount||0).toLocaleString('en-IN',{maximumFractionDigits:0})], ['Duration', `${s.stage_5_po.duration_ms}ms`]]
+      );
+
+      // Enable Complete button and pre-fill PO ID
+      document.getElementById('btn-complete').disabled = false;
+      document.getElementById('inp-po-id').value = po?.po_id || '';
+
+      // Show summary banner
+      const summary = data.summary || {};
+      document.getElementById('sb-pipeline').textContent = 'Stages 1–5 ✅';
+      document.getElementById('sb-po').textContent       = po?.po_number || '—';
+      document.getElementById('sb-vendor').textContent   = summary.winning_vendor || '—';
+      document.getElementById('sb-value').textContent    = po ?
+        '₹' + (po.total_amount||0).toLocaleString('en-IN',{maximumFractionDigits:0}) : '—';
+      document.getElementById('sb-vendors').textContent  = summary.vendors_evaluated || '—';
+      document.getElementById('sb-duration').textContent =
+        data.total_duration_ms ? `${data.total_duration_ms}ms` : '—';
+      document.getElementById('summary-banner').classList.add('visible');
+    } else if (!s.stage_5_po && data.result) {
+      setStage(5, 'skipped', '⚠️ Skipped', data.result, null);
+    }
+
+    // Populate JSON silently — stays collapsed, user opens if needed
+    document.getElementById('result-panel').style.display = 'block';
+    document.getElementById('result-pre').style.display   = 'none';
+    document.getElementById('result-panel-chevron').textContent = '▶ Click to expand';
+    document.getElementById('result-pre').textContent = JSON.stringify(data, null, 2);
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa fa-play"></i> Run Pipeline (Stage 1–5)';
+  }
+
+  // ── Complete PO Modal ───────────────────────────────────────
+  function openCompleteModal() {
+    if (lastPOId) document.getElementById('inp-po-id').value = lastPOId;
+    document.getElementById('complete-modal').style.display = 'flex';
+  }
+
+  async function runComplete() {
+    const poId   = parseInt(document.getElementById('inp-po-id').value);
+    const quality = document.getElementById('inp-quality').value;
+    const mode    = document.getElementById('inp-payment-mode').value;
+
+    if (!poId || poId < 1) { alert('Please enter a valid PO ID'); return; }
+
+    document.getElementById('complete-modal').style.display = 'none';
+    const btn = document.getElementById('btn-complete');
+    const btnRun = document.getElementById('btn-run');
+    btn.disabled = btnRun.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Running…';
+
+    setActive(6, 'Creating GRN…');
+    setActive(7, 'Matching Invoice…');
+    setActive(8, 'Processing Payment…');
+
+    let data;
+    try {
+      const res = await fetch(`${API}/api/workflow/complete`, {
+        method : 'POST',
+        headers: {'Content-Type':'application/json'},
+        body   : JSON.stringify({po_id: poId, quality_status: quality, payment_mode: mode})
+      });
+      data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Completion error');
+    } catch (err) {
+      [6,7,8].forEach(n => setStage(n, 'error', '❌ Error', `❌ ${err.message}`, null));
+      btn.disabled = btnRun.disabled = false;
+      btn.innerHTML = '<i class="fa fa-flag-checkered"></i> Complete PO (Stage 6–8)';
+      return;
+    }
+
+    const s = data.stages || {};
+
+    // Stage 6
+    if (s.stage_6_grn) {
+      const st = s.stage_6_grn;
+      setStage(6, 'done', '✅ Done',
+        `GRN <strong>${st.grn_number}</strong><br/>Quality: ${st.quality_status}`,
+        [['GRN', st.grn_number], ['Received', st.received_date], ['Quality', st.quality_status]]
+      );
+    }
+
+    // Stage 7
+    if (s.stage_7_invoice_match) {
+      const st  = s.stage_7_invoice_match;
+      const mr  = st.match_result || {};
+      const cls = mr.match_status === 'Matched' ? 'done' :
+                  mr.match_status === 'Partial Match' ? 'done' : 'error';
+      const emoji = mr.match_status === 'Matched' ? '✅' :
+                    mr.match_status === 'Partial Match' ? '🟡' : '❌';
+      setStage(7, cls, emoji + ' ' + (mr.match_status || 'Done'),
+        `<strong>${st.internal_ref}</strong> — ${mr.match_status}<br/>${mr.summary||''}`,
+        [['Match', mr.match_status], ['Checks', `${mr.checks_passed}/${mr.checks_total}`], ['₹', (st.total_amount||0).toLocaleString('en-IN',{maximumFractionDigits:0})]]
+      );
+    }
+
+    // Stage 8
+    if (s.stage_8_payment_score) {
+      const st = s.stage_8_payment_score;
+      if (st.status === '✅ Completed') {
+        const vs = st.vendor_score_updated || {};
+        setStage(8, 'done', '✅ Done',
+          `Payment <strong>${st.payment_ref}</strong> — ₹${(st.amount_paid_inr||0).toLocaleString('en-IN',{maximumFractionDigits:0})}<br/>Vendor Score: <strong>${vs.new_overall_score}</strong> (${vs.grade})`,
+          [['Ref', st.payment_ref], ['Mode', st.payment_mode], ['Vendor Score', vs.new_overall_score], ['Grade', vs.grade]]
+        );
+        // Final summary
+        document.getElementById('sb-pipeline').textContent = 'All 8 Stages ✅';
+      } else {
+        setStage(8, 'skipped', '⏸️ Held', `Payment on hold — ${st.reason}`, null);
+      }
+    }
+
+    // Populate JSON silently — stays collapsed
+    document.getElementById('result-panel').style.display = 'block';
+    document.getElementById('result-pre').style.display   = 'none';
+    document.getElementById('result-panel-chevron').textContent = '▶ Click to expand';
+    document.getElementById('result-pre').textContent = JSON.stringify(data, null, 2);
+
+    btn.disabled = btnRun.disabled = false;
+    btn.innerHTML = '<i class="fa fa-flag-checkered"></i> Complete PO (Stage 6–8)';
+  }
+
+  function copyResult() {
+    navigator.clipboard.writeText(
+      document.getElementById('result-pre').textContent
+    ).then(() => {
+      const btn = document.querySelector('.btn-copy');
+      btn.innerHTML = '<i class="fa fa-check"></i> Copied!';
+      setTimeout(() => btn.innerHTML = '<i class="fa fa-copy"></i> Copy', 2000);
+    });
+  }
+
+  function toggleResultPanel() {
+    const pre     = document.getElementById('result-pre');
+    const chevron = document.getElementById('result-panel-chevron');
+    const isOpen  = pre.style.display !== 'none';
+    pre.style.display     = isOpen ? 'none' : 'block';
+    chevron.textContent   = isOpen ? '▶ Click to expand' : '▼ Click to collapse';
+  }
+</script>
+</body>
+</html>

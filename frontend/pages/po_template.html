@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Purchase Order — Matrix Comsec</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary     : #1a3f6f;
+      --primary-lt  : #1e56a0;
+      --accent      : #e8f0fc;
+      --border      : #c8d6e8;
+      --text        : #1a2032;
+      --muted       : #5a6680;
+      --green       : #15803d;
+      --red         : #dc2626;
+      --amber       : #d97706;
+    }
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background: #e8edf5;
+      color: var(--text);
+      padding: 24px 16px 48px;
+    }
+
+    /* Screen toolbar */
+    .screen-toolbar {
+      max-width: 900px;
+      margin: 0 auto 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .screen-toolbar h2 {
+      flex: 1;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .btn {
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--primary-lt); color: #fff; }
+    .btn-primary:hover { background: var(--primary); }
+    .btn-outline  { background: #fff; color: var(--primary); border: 1.5px solid var(--border); }
+    .btn-outline:hover { background: var(--accent); }
+
+    /* Loading / error */
+    .state-box {
+      max-width: 900px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 48px;
+      text-align: center;
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    /* ────────────────── PO DOCUMENT ────────────────── */
+    .po-document {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #c0cfe0;
+      border-radius: 4px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      overflow: hidden;
+    }
+
+    /* --- Header Banner --- */
+    .po-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+      gap: 16px;
+      padding: 24px 32px;
+      border-bottom: 3px solid var(--primary);
+    }
+    .co-name {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.3px;
+    }
+    .co-sub {
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-top: 3px;
+      line-height: 1.6;
+    }
+    .po-title-block {
+      text-align: right;
+    }
+    .po-title-block .title-label {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--primary-lt);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .po-meta-grid {
+      display: flex;
+      gap: 20px;
+      margin-top: 6px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    .po-meta-item { font-size: 12px; color: var(--muted); }
+    .po-meta-item strong { color: var(--text); display: block; }
+
+    /* --- Address Grid --- */
+    .address-strip {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .address-box {
+      padding: 16px 24px;
+      border-right: 1px solid var(--border);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    .address-box:last-child { border-right: none; }
+    .address-box .addr-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #fff;
+      background: var(--primary);
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+    .address-box strong { font-weight: 700; color: var(--text); }
+
+    /* --- Terms Bar --- */
+    .terms-bar {
+      display: flex;
+      background: var(--primary);
+      color: #fff;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+    .terms-bar-cell {
+      flex: 1;
+      padding: 8px 16px;
+      border-right: 1px solid rgba(255,255,255,0.15);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .terms-bar-cell:last-child { border-right: none; }
+    .terms-bar-cell span {
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      margin-left: 4px;
+      color: rgba(255,255,255,0.85);
+    }
+
+    /* --- Items Table --- */
+    .items-section { padding: 0; }
+    .items-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      padding: 10px 24px 6px;
+      border-bottom: 1px solid var(--border);
+      background: #f8fafd;
+    }
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+    .items-table thead tr {
+      background: var(--accent);
+      border-bottom: 2px solid var(--border);
+    }
+    .items-table th {
+      padding: 9px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+    }
+    .items-table th.r { text-align: right; }
+    .items-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #eef1f6;
+      vertical-align: middle;
+    }
+    .items-table td.r { text-align: right; font-weight: 600; }
+    .items-table tbody tr:hover { background: #f8fafd; }
+    .items-table .item-code { font-size: 10.5px; color: var(--muted); }
+
+    /* --- Totals Block --- */
+    .totals-section {
+      display: flex;
+      justify-content: flex-end;
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      background: #f8fafd;
+    }
+    .totals-table { width: 280px; font-size: 13px; }
+    .totals-table td { padding: 4px 8px; }
+    .totals-table .label { color: var(--muted); text-align: right; }
+    .totals-table .value { text-align: right; font-weight: 600; }
+    .totals-table .grand-label { font-size: 14px; font-weight: 800; color: var(--primary); }
+    .totals-table .grand-value { font-size: 16px; font-weight: 800; color: var(--primary); }
+    .totals-table tr.grand { border-top: 2px solid var(--primary); }
+
+    /* --- Notes --- */
+    .notes-section {
+      padding: 14px 24px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.7;
+      background: #fff;
+    }
+    .notes-section strong { color: var(--text); }
+
+    /* --- Signature Footer --- */
+    .sig-footer {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      border-top: 2px solid var(--primary);
+      padding: 24px 32px;
+      gap: 16px;
+    }
+    .sig-block { text-align: center; }
+    .sig-line {
+      border-top: 1.5px solid #b0bed0;
+      margin: 36px 16px 6px;
+    }
+    .sig-name { font-size: 13px; font-weight: 700; color: var(--text); }
+    .sig-role { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* --- Status Badge --- */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .status-draft    { background: #f1f5f9; color: #64748b; }
+    .status-approved { background: #dcfce7; color: #15803d; }
+    .status-pending  { background: #fef9c3; color: #92400e; }
+    .status-sent     { background: #e0f2fe; color: #0369a1; }
+
+    /* Print styles */
+    @media print {
+      body { background: #fff; padding: 0; }
+      .screen-toolbar { display: none; }
+      .po-document { box-shadow: none; border: none; max-width: 100%; }
+      .address-strip { break-inside: avoid; }
+      .items-table tbody tr { break-inside: avoid; }
+      .sig-footer { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Screen Toolbar (hidden on print) -->
+<div class="screen-toolbar">
+  <h2><i class="fa fa-file-invoice" style="color:var(--primary-lt);margin-right:8px;"></i>Purchase Order Document</h2>
+  <a href="purchase_orders.html" class="btn btn-outline">
+    <i class="fa fa-arrow-left"></i> Back to POs
+  </a>
+  <button class="btn btn-primary" onclick="window.print()">
+    <i class="fa fa-print"></i> Print / Save PDF
+  </button>
+</div>
+
+<!-- Loading State -->
+<div class="state-box" id="loading-state">
+  <i class="fa fa-spinner fa-spin" style="font-size:32px;color:var(--primary-lt);margin-bottom:16px;display:block;"></i>
+  Loading Purchase Order...
+</div>
+
+<!-- PO Document (hidden until loaded) -->
+<div class="po-document" id="po-document" style="display:none;">
+
+  <!-- HEADER -->
+  <div class="po-header">
+    <div>
+      <div class="co-name">MATRIX COMSEC PVT. LTD.</div>
+      <div class="co-sub">
+        Plot No. 12, Electronic Estate, Gandhinagar - 382 021, Gujarat, India<br/>
+        GSTIN: 24AABCM1234F1ZQ &nbsp;|&nbsp; Tel: +91-79-2323-4455<br/>
+        Email: procurement@matrixcomsec.com
+      </div>
+    </div>
+    <div class="po-title-block">
+      <div class="title-label">Purchase Order</div>
+      <div class="po-meta-grid">
+        <div class="po-meta-item">
+          <strong id="po-number">—</strong>
+          PO Number
+        </div>
+        <div class="po-meta-item">
+          <strong id="po-date">—</strong>
+          PO Date
+        </div>
+        <div class="po-meta-item">
+          <strong id="po-valid-until">—</strong>
+          Delivery By
+        </div>
+      </div>
+      <div style="margin-top:10px;" id="po-status-badge"></div>
+    </div>
+  </div>
+
+  <!-- ADDRESS GRID -->
+  <div class="address-strip">
+    <div class="address-box">
+      <div class="addr-label">Bill To</div>
+      <strong>Matrix Comsec Pvt. Ltd.</strong><br/>
+      Plot No. 12, Electronic Estate,<br/>
+      Gandhinagar - 382 021, Gujarat<br/>
+      GSTIN: 24AABCM1234F1ZQ
+    </div>
+    <div class="address-box">
+      <div class="addr-label">Ship To</div>
+      <div id="ship-to-text">
+        <strong>Matrix Comsec — Stores</strong><br/>
+        Plot No. 12, Electronic Estate,<br/>
+        Gandhinagar - 382 021, Gujarat<br/>
+        Attn: Stores Manager
+      </div>
+    </div>
+    <div class="address-box">
+      <div class="addr-label">Vendor</div>
+      <div id="vendor-block">—</div>
+    </div>
+  </div>
+
+  <!-- TERMS BAR -->
+  <div class="terms-bar">
+    <div class="terms-bar-cell">Payment Terms<span id="t-payment">—</span></div>
+    <div class="terms-bar-cell">Currency<span>INR</span></div>
+    <div class="terms-bar-cell">Incoterms<span id="t-incoterms">—</span></div>
+    <div class="terms-bar-cell">Department<span id="t-dept">—</span></div>
+    <div class="terms-bar-cell" id="t-rfq-cell" style="display:none;">RFQ Ref.<span id="t-rfq">—</span></div>
+  </div>
+
+  <!-- LINE ITEMS -->
+  <div class="items-section">
+    <div class="items-label">LINE ITEMS</div>
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width:40px;">#</th>
+          <th>Product / Description</th>
+          <th style="width:80px;" class="r">Qty</th>
+          <th style="width:60px;">Unit</th>
+          <th style="width:120px;" class="r">Unit Price (INR)</th>
+          <th style="width:60px;" class="r">GST %</th>
+          <th style="width:130px;" class="r">Amount (INR)</th>
+        </tr>
+      </thead>
+      <tbody id="po-items-tbody">
+        <tr><td colspan="7" style="text-align:center;padding:24px;color:#94a3b8;">Loading items...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- TOTALS -->
+  <div class="totals-section">
+    <table class="totals-table">
+      <tr>
+        <td class="label">Subtotal</td>
+        <td class="value" id="t-subtotal">—</td>
+      </tr>
+      <tr>
+        <td class="label" id="t-gst-label">GST</td>
+        <td class="value" id="t-tax">—</td>
+      </tr>
+      <tr class="grand">
+        <td class="label grand-label">Total</td>
+        <td class="value grand-value" id="t-total">—</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- NOTES -->
+  <div class="notes-section" id="po-notes-section" style="display:none;">
+    <strong>Notes / Terms &amp; Conditions:</strong><br/>
+    <span id="po-notes-text"></span>
+  </div>
+
+  <!-- SIGNATURE FOOTER -->
+  <div class="sig-footer">
+    <div class="sig-block">
+      <div class="sig-line"></div>
+      <div class="sig-name" id="sig-prepared">Procurement Executive</div>
+      <div class="sig-role">Prepared by</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-line"></div>
+      <div class="sig-name" id="sig-l1">—</div>
+      <div class="sig-role">L1 Approved by</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-line"></div>
+      <div class="sig-name" id="sig-l2">Authorised Signatory</div>
+      <div class="sig-role">For <span id="sig-vendor-name">—</span></div>
+    </div>
+  </div>
+
+  <!-- Legal Footer -->
+  <div style="background:#f8fafd;border-top:1px solid var(--border);padding:12px 32px;
+              font-size:10px;color:var(--muted);text-align:center;line-height:1.6;">
+    This Purchase Order is subject to Matrix Comsec standard Terms &amp; Conditions.
+    All deliveries must include this PO reference. For queries: procurement@matrixcomsec.com
+  </div>
+
+</div>
+
+<script>
+  const API = 'http://127.0.0.1:8000/api';
+
+  function fmt(num) {
+    return 'INR ' + parseFloat(num || 0).toLocaleString('en-IN', {
+      minimumFractionDigits: 2, maximumFractionDigits: 2
+    });
+  }
+
+  function fmtDate(str) {
+    if (!str) return '—';
+    const d = new Date(str);
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  function statusBadge(status) {
+    const map = {
+      'Draft'               : ['status-draft',    'fa-pencil'],
+      'Pending L1 Approval' : ['status-pending',  'fa-clock'],
+      'Pending L2 Approval' : ['status-pending',  'fa-clock'],
+      'Approved'            : ['status-approved', 'fa-check-circle'],
+      'Sent to Vendor'      : ['status-sent',     'fa-paper-plane'],
+    };
+    const [cls, icon] = map[status] || ['status-draft', 'fa-circle'];
+    return `<span class="status-badge ${cls}"><i class="fa ${icon}"></i>${status}</span>`;
+  }
+
+  async function loadPO() {
+    const params = new URLSearchParams(window.location.search);
+    const poId   = params.get('po_id');
+    if (!poId) {
+      document.getElementById('loading-state').innerHTML =
+        '<i class="fa fa-exclamation-triangle" style="font-size:32px;color:#dc2626;display:block;margin-bottom:12px;"></i>No PO ID provided in URL.<br/><a href="purchase_orders.html" style="color:#1a56db;">Go back to Purchase Orders</a>';
+      return;
+    }
+
+    try {
+      const res  = await fetch(`${API}/purchase-orders/${poId}/detail`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to load');
+
+      const { po, vendor, items, rfq } = data;
+
+      // Header
+      document.getElementById('po-number').textContent       = po.po_number;
+      document.getElementById('po-date').textContent         = fmtDate(po.po_date);
+      document.getElementById('po-valid-until').textContent  = fmtDate(po.delivery_date);
+      document.getElementById('po-status-badge').innerHTML   = statusBadge(po.status);
+
+      // Terms bar
+      document.getElementById('t-payment').textContent   = po.payment_terms || 'As agreed';
+      document.getElementById('t-incoterms').textContent = po.incoterms || 'DAP — Gandhinagar';
+      document.getElementById('t-dept').textContent      = po.department || 'Procurement';
+      if (rfq) {
+        document.getElementById('t-rfq').textContent   = rfq.rfq_number;
+        document.getElementById('t-rfq-cell').style.display = '';
+      }
+
+      // Vendor block
+      document.getElementById('vendor-block').innerHTML = `
+        <strong>${vendor.company_name}</strong><br/>
+        ${vendor.address || '—'}<br/>
+        ${vendor.email ? `Email: ${vendor.email}<br/>` : ''}
+        ${vendor.phone ? `Tel: ${vendor.phone}<br/>` : ''}
+        ${vendor.oem_approved ? '<span style="color:#0369a1;font-size:10.5px;font-weight:700;">&#10003; OEM Approved</span>' : ''}
+      `;
+
+      // Signature block
+      document.getElementById('sig-prepared').textContent  = po.created_by || 'Procurement Executive';
+      document.getElementById('sig-l1').textContent        = po.l1_approver || '—';
+      document.getElementById('sig-vendor-name').textContent = vendor.company_name;
+
+      // Notes
+      if (po.notes) {
+        document.getElementById('po-notes-text').textContent = po.notes;
+        document.getElementById('po-notes-section').style.display = '';
+      }
+
+      // Ship To (from delivery_address if set)
+      if (po.delivery_address) {
+        document.getElementById('ship-to-text').innerHTML =
+          '<strong>Matrix Comsec — Stores</strong><br/>' +
+          po.delivery_address.replace(/,/g, ',<br/>').substring(0, 160);
+      }
+
+      // Items
+      const tbody = document.getElementById('po-items-tbody');
+      if (!items || items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#94a3b8;">No line items found.</td></tr>';
+      } else {
+        tbody.innerHTML = items.map((item, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>
+              <div style="font-weight:600;">${item.description}</div>
+              ${item.item_code ? `<div class="item-code">Code: ${item.item_code}</div>` : ''}
+            </td>
+            <td class="r">${parseFloat(item.quantity).toLocaleString('en-IN')}</td>
+            <td>${item.unit}</td>
+            <td class="r">${parseFloat(item.unit_price).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+            <td class="r">${parseFloat(item.tax_percent).toFixed(1)}%</td>
+            <td class="r">${parseFloat(item.total_price).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+          </tr>
+        `).join('');
+      }
+
+      // Build totals — compute average GST % label
+      const avgGst = items.length
+        ? (items.reduce((s, i) => s + parseFloat(i.tax_percent), 0) / items.length).toFixed(0)
+        : 18;
+      document.getElementById('t-gst-label').textContent = `GST (${avgGst}%)`;
+      document.getElementById('t-subtotal').textContent  = fmt(po.subtotal);
+      document.getElementById('t-tax').textContent       = fmt(po.tax_amount);
+      document.getElementById('t-total').textContent     = fmt(po.total_amount);
+
+      // Show document
+      document.getElementById('loading-state').style.display  = 'none';
+      document.getElementById('po-document').style.display    = '';
+
+    } catch(e) {
+      document.getElementById('loading-state').innerHTML =
+        `<i class="fa fa-triangle-exclamation" style="font-size:32px;color:#dc2626;display:block;margin-bottom:12px;"></i>
+         Error loading PO: ${e.message}<br/>
+         <a href="purchase_orders.html" style="color:#1a56db;margin-top:8px;display:inline-block;">Go back</a>`;
+    }
+  }
+
+  loadPO();
+</script>
+</body>
+</html>

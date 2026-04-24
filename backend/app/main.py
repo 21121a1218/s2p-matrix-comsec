@@ -2,14 +2,18 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, RedirectResponse
+from pathlib import Path
 from app.database import test_connection, engine, Base
 
 # Import ALL routers
 from app.routers import (
     vendors, rfq, quotations, purchase_orders,
     invoices, dashboard, sap, contracts,
-    negotiations, checklists, audit
+    negotiations, checklists, audit, workflow
 )
+from app.routers import commercial_governance
 
 # ── Lifespan (replaces deprecated @app.on_event) ─────────────
 @asynccontextmanager
@@ -17,7 +21,7 @@ async def lifespan(app: FastAPI):
     # Startup
     Base.metadata.create_all(bind=engine)
     test_connection()
-    print("✅ S2P System v2.0 started — All BRD modules active")
+    print("S2P System v2.1 started - Full pipeline automation active")
     yield
     # Shutdown (optional cleanup)
     print("S2P System shutting down...")
@@ -26,7 +30,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title       = "S2P Automation System — Matrix Comsec",
     description = "AI-powered Source-to-Pay platform | All BRD requirements implemented",
-    version     = "2.0.0",
+    version     = "2.1.0",
     docs_url    = "/docs",
     redoc_url   = "/redoc",
     lifespan    = lifespan
@@ -53,40 +57,30 @@ app.include_router(contracts.router,        prefix="/api/contracts",       tags=
 app.include_router(negotiations.router,     prefix="/api/negotiations",    tags=["Negotiations"])
 app.include_router(checklists.router,       prefix="/api/checklists",      tags=["Checklists"])
 app.include_router(audit.router,            prefix="/api/audit",           tags=["Audit Trail"])
+app.include_router(workflow.router,             prefix="/api/workflow",        tags=["S2P Workflow Pipeline"])
+app.include_router(commercial_governance.router, prefix="/api/governance",      tags=["Commercial Governance"])
 
-# ── Root Endpoints ────────────────────────────────────────────
+# ── Serve Frontend Static Files ───────────────────────────────
+FRONTEND_DIR = Path(__file__).parent.parent.parent / "frontend"
+if FRONTEND_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+
+# ── Root: serve index.html ─────────────────────────────────────
 @app.get("/")
 def root():
-    return {
-        "system" : "S2P Automation — Matrix Comsec Pvt. Ltd.",
-        "version": "2.0.0",
-        "status" : "running",
-        "docs"   : "/docs",
-        "brd_coverage": {
-            "BR-S2P-01": "✅ AI Vendor Discovery",
-            "BR-S2P-02": "✅ Vendor Master Database",
-            "BR-S2P-03": "✅ RFQ Generation",
-            "BR-S2P-04": "✅ Quotation Comparison",
-            "BR-S2P-05": "✅ Vendor Approval Workflow",
-            "BR-S2P-06": "✅ Negotiation Tracking",
-            "BR-S2P-07": "✅ Contract Management",
-            "BR-S2P-08": "✅ Commercial Dashboard",
-            "BR-S2P-09": "✅ PO Automation",
-            "BR-S2P-10": "✅ Invoice 3-Way Match",
-            "BR-S2P-11": "✅ Payment Tracking + Alerts",
-            "BR-S2P-12": "✅ Checklist Engine",
-            "BR-S2P-13": "✅ Vendor Performance Scoring",
-            "BR-S2P-14": "✅ AMC Tracking",
-            "BR-S2P-15": "✅ Web Interface",
-            "NFR-01"   : "✅ SAP Integration",
-            "NFR-02"   : "✅ Data Security",
-            "NFR-03"   : "✅ Solution Flexibility",
-            "NFR-04"   : "✅ Scalability",
-            "NFR-05"   : "✅ Usability",
-            "NFR-06"   : "✅ Audit Trail"
-        }
-    }
+    index_path = FRONTEND_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(str(index_path))
+    return {"system": "S2P Automation — Matrix Comsec Pvt. Ltd.", "status": "running", "docs": "/docs"}
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "version": "2.0.0"}
+    return {"status": "healthy", "version": "2.1.0"}
+
+# ── Serve individual frontend pages ────────────────────────────
+@app.get("/pages/{page_name}")
+def serve_page(page_name: str):
+    page_path = FRONTEND_DIR / "pages" / page_name
+    if page_path.exists():
+        return FileResponse(str(page_path))
+    return {"error": f"Page {page_name} not found"}, 404
