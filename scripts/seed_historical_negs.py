@@ -2,17 +2,24 @@ import sys
 import os
 import random
 from datetime import datetime, timedelta
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
+# Add backend dir to pythonpath
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend')))
 
 from app.database import SessionLocal
 from app.models.negotiation import Negotiation
 
+db = SessionLocal()
+
 def seed_historical():
-    db = SessionLocal()
     try:
-        months_back = [1, 2, 3] 
+        # Create historical entries for Jan, Feb, Mar 2026
+        months_back = [1, 2, 3] # Apr is 0. So 1 month back is Mar, 2 is Feb, 3 is Jan
+        
         for m in months_back:
+            # Approximate date
             dt = datetime.utcnow() - timedelta(days=30 * m)
+            
             initial = random.randint(300000, 900000)
             agreed = initial - random.randint(25000, 95000)
             savings = initial - agreed
@@ -36,7 +43,7 @@ def seed_historical():
             db.add(neg)
             
         db.commit()
-        print("Success")
+        print("Successfully seeded historical negotiation data for chart!")
     except Exception as e:
         print(f"Error: {e}")
         db.rollback()

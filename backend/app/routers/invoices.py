@@ -109,19 +109,7 @@ def get_invoices(match_status: Optional[str] = None, db: Session = Depends(get_d
     query = db.query(Invoice)
     if match_status:
         query = query.filter(Invoice.match_status == match_status)
-    invoices = query.order_by(Invoice.created_at.desc()).all()
-    
-    results = []
-    for inv in invoices:
-        vendor = db.query(Vendor).filter(Vendor.id == inv.vendor_id).first()
-        po = db.query(PurchaseOrder).filter(PurchaseOrder.id == inv.po_id).first() if inv.po_id else None
-        
-        inv_dict = {c.name: getattr(inv, c.name) for c in inv.__table__.columns}
-        inv_dict["vendor_name"] = vendor.company_name if vendor else f"Vendor #{inv.vendor_id}"
-        inv_dict["po_number"] = po.po_number if po else "N/A"
-        results.append(inv_dict)
-
-    return {"invoices": results}
+    return {"invoices": query.order_by(Invoice.created_at.desc()).all()}
 
 @router.post("/")
 def create_invoice(data: InvoiceCreate, db: Session = Depends(get_db)):
@@ -188,17 +176,17 @@ def three_way_match(invoice_id: int, db: Session = Depends(get_db)):
 
     # 1. Verification: Header Level (PO & Vendor)
     if not invoice.po_id:
-        issues.append("No PO linked — source of truth missing")
+        issues.append("PO MISMATCH: No Purchase Order linked — source of truth missing")
     else:
         po = db.query(PurchaseOrder).filter(PurchaseOrder.id == invoice.po_id).first()
         if not po:
-            issues.append("Linked PO not found")
+            issues.append("PO MISMATCH: Linked Purchase Order not found in database")
         elif po.vendor_id != invoice.vendor_id:
-            issues.append("VENDOR MISMATCH: Invoice vendor does not match PO vendor")
+            issues.append("VENDOR MISMATCH: Invoice vendor ID does not match the authorized PO vendor")
 
     # 2. Verification: Receipt Check (GRN)
     if not invoice.grn_id:
-        issues.append("No Receipt (GRN) found — cannot verify physical delivery")
+        issues.append("GRN MISMATCH: No Goods Receipt (GRN) found — physical delivery not verified")
     
     # 3. VERIFICATION: Granular Line-Item Audit (THE 'NO-LIES' CHECK)
     if invoice.grn_id and invoice.items:
@@ -252,8 +240,8 @@ def three_way_match(invoice_id: int, db: Session = Depends(get_db)):
         tolerance = 0.01  # 1% tolerance for minor rounding
         diff = abs(float(invoice.total_amount) - expected_total)
         if diff > (tolerance * expected_total) and diff > 10: # >10 INR absolute diff
-            issues.append(f"FINANCIAL DISCREPANCY: Invoice Total (₹{invoice.total_amount}) "
-                          f"does not match Expected Total (₹{round(expected_total, 2)}) based on GRN.")
+            issues.append(f"FINANCIAL MISMATCH: Invoice Total (₹{invoice.total_amount:,.2f}) "
+                          f"exceeds Expected Total (₹{round(expected_total, 2):,.2f}) based on accepted GRN quantities.")
 
     # 4. Final Status Determination
     if not issues:
@@ -289,18 +277,7 @@ def three_way_match(invoice_id: int, db: Session = Depends(get_db)):
 
 @router.get("/grn/")
 def get_grns(db: Session = Depends(get_db)):
-    grns = db.query(GRN).order_by(GRN.created_at.desc()).all()
-    results = []
-    for g in grns:
-        vendor = db.query(Vendor).filter(Vendor.id == g.vendor_id).first()
-        po = db.query(PurchaseOrder).filter(PurchaseOrder.id == g.po_id).first() if g.po_id else None
-        
-        g_dict = {c.name: getattr(g, c.name) for c in g.__table__.columns}
-        g_dict["vendor_name"] = vendor.company_name if vendor else f"Vendor #{g.vendor_id}"
-        g_dict["po_number"] = po.po_number if po else "N/A"
-        results.append(g_dict)
-
-    return {"grns": results}
+    return {"grns": db.query(GRN).order_by(GRN.created_at.desc()).all()}
 
 @router.get("/grn/{grn_id}")
 def get_grn_detail(grn_id: int, db: Session = Depends(get_db)):
